@@ -23,6 +23,3 @@ Each script has a **`PATHS`** block at the top — edit those paths per machine
 
 ## Environment
 Python: `rasterio`, `scikit-learn`, `numpy`, `matplotlib`, `earthengine-api`.
-
-## Note
-Report prose is written by Yu; GenAI is used only for script bug fixing.

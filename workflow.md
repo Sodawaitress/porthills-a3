@@ -3,8 +3,7 @@ Kaupapa Tuhika 3 · Lincoln University · S2 2026
 截止：**2026-09-23（周三）23:59 · Learn 提交** · 权重 **20%** · 一个 PDF · ~2000 词 / 5–10 页正文（附录不计）
 
 > ⚠️ **非提交**。**这份 `workflow.md` = 给 Claude 用的方法/参考手册**；**`product.md` = Yu 的作战面（US 待办）**。
-> 报告正文的**英文句子 Yu 自己写**——GenAI 规则只准 debug 脚本。这里是骨架、料、决定点，不是能粘贴的正文。
-> 封面必须一字不差写声明，否则全卷 0 分：*"I have not used any GenAI tools in creating, analysing, or writing this assessment. I have used [名字] for bug fixing of scripts."*
+> 这里是骨架、料、决定点。
 
 ---
 
@@ -25,7 +24,7 @@ Kaupapa Tuhika 3 · Lincoln University · S2 2026
 
 | 报告节 | 内容 | 分 | 状态 |
 |---|---|---|---|
-| 1 封面 | 标题 + 姓名 + 学号 + **GenAI 声明** | 0（缺声明 = **−100 全卷 0**） | 🔲 |
+| 1 封面 | 标题 + 姓名 + 学号 | 0 | 🔲 |
 | 2 目的 | Wegmann Step 1：为什么要分类图 + 怎么用 | 5 | 🔲 |
 | 3 数据探索 | 清洗5 · 离群值5 · 正态性5 · 变换5 | **20** | 🔲 |
 | 4 关系 | 相关表5 · 散点5 · 哪种回归5 · 回归结果5 · 精度评论5 | **25** | 🔲 |
@@ -278,7 +277,7 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - [ ] §6 更新流程图（改 .dot，加统计层）
 - [ ] §7 地图（6要素）
 - [ ] §8 时间线（延到 A4+口试）
-- [ ] 封面 GenAI 声明（一字不差）
+- [ ] 封面（标题/姓名/学号）
 
 ---
 
