@@ -50,7 +50,7 @@ Kaupapa Tuhika 3 · Lincoln University · S2 2026
 | 项 | 具体 | 状态 |
 |---|---|---|
 | 类别标签 | 从 LCDB v4.1 + 航拍/高分影像目视判读的点 | 🔲 |
-| 分类体系（A2 定的 5 类） | pasture / gorse-broom(高易燃) / exotic pine / native scrub(低易燃) / bare-rock | 🔲 |
+| 分类体系（A2 定的 5 类） | pasture / gorse-broom(高易燃) / exotic pine / native scrub(低易燃) / bare-rock | 🟡（4/5 类有点，bare-rock 缺） |
 
 ⚠️ 课题原文点名："field data ... sometimes collected off **'reference imagery'** where field data are not available" —— 就是你这种情况，**光明正大用高分影像取点**，说清楚即可。
 
@@ -218,7 +218,7 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 |---|---|---|---|
 | 1 | 哪些变量进数据探索 | 6波段 + 主指数 + 地形层 | 🔲 |
 | 2 | **哪种回归**（field 是类别型） | **A(推荐)** dNBR 当连续 Y→线性回归（对齐 lab+服务科学+出 R²/RMSE）；**B** 保持类别→逻辑回归+cross-tab。选一个说清为什么，拿不准问 Helen | 🔲 |
-| 3 | 训/验怎么分 | 70/30 · 面积比例 · 空间块 · 少类过采样 | 🔲 |
+| 3 | 训/验怎么分 | **定了**：70/30，按 300m 空间格子整块分配（不逐点随机，避免自相关），见下"方法记录" | ✅ |
 | 4 | 像元 vs 对象 | A2 倾向像元 RF | 🔲 |
 | 5 | 软件 | **务实分工**：采点/数字化+配准=ArcPro；§3/§4统计=Python/GEE（术语对齐 lab）；分类+混淆矩阵=GEE；最终地图=ArcPro。见上"软件"节 | 🔲 |
 
@@ -248,6 +248,15 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - ⚠️ **结论待定**：把 `kmeans_k5.tif` 叠 `A2porthills-fire/raster/PortHills_Aerial03m_2015.tif` 逐簇认名，才知 gorse/pine/native 分不分得开。分不开 → 合并 或 加特征(S2 red-edge / 季节 dNDVI)。
 - ⚠️ 只作**诊断**（贴标签前），不是最终分类；定量可分性在 **US5**（JM + 光谱曲线）。
 
+## 方法记录 · US1.4/1.5 LCDB reclass + 分层撒点（2026-09-18）
+
+- **US1.4 对照表**：`lcdbPorthills` 加字段 `FuelClass`(文本)，Calculate Field 按 `Name_2012` 查表填值，Manuka/Kanuka 按易燃性归 `gorse_broom`（不按 native/exotic，见 product.md US1.4 完整对照表）。跑完分布：exotic_pine 50 个多边形、gorse_broom 37、pasture 17、native_scrub 16、Built-up 1(空值，排除，面积仅 0.05ha)。
+- **US1.5 撒点**：`arcpy.management.CreateRandomPoints`，每类目标 50 点，最小间距 30m(避免同一 Landsat 像元里挤好几个点)。
+  - ⚠️ **踩过的坑**：约束范围传入一个类的多个多边形时，这个工具是**每个多边形都撒够 N 个**，不是这一类总共 N 个——第一次跑出来 3604 点（该是 200）。**修法**：先 `Dissolve` 把同一类的多边形合并成一个整体，再撒点，N 才是这一类的总数。
+  - 结果：4 类 × 50 = 200 点，存 `PortHills2017.gdb\TrainingPoints_raw`，字段 `FuelClass`/`class_id`(1-4，喂 GEE)/`split`。
+- **训/验切分**：**没有**逐点随机 70/30——查资料发现这样切空间自相关会让验证精度虚高（[Spatial dependence between training and test sets 论文](https://link.springer.com/article/10.1007/s10994-021-05972-1)）。改成**按 300m 格子整块分配**（同一格子的点必须分到同一边），70/30 比例因此不精确（如 native_scrub 实际 58/42），这是有意的取舍。参考：[Choosing blocks for spatial cross-validation](https://www.researchgate.net/publication/390049401_Choosing_blocks_for_spatial_cross-validation_Lessons_from_a_marine_remote_sensing_case_study)、[Olofsson et al. 2014 分层抽样](https://research.wur.nl/en/publications/good-practices-for-estimating-area-and-assessing-accuracy-of-land/)。
+- 脚本临时写在本机 `%TEMP%`，没进仓库（纯一次性数据操作，不是可复用管线）；逻辑摘要就是这段记录。
+
 ## Lab 资源链接（Helen 给的 + lab 出处）
 
 - **两份 lab PDF**：`A3/ERST619_L8_RelatingImageData2FieldData_FullDeck.pdf`（§3/§4 配方）、`A3/Week 1 - ERST310-Georef_2025_Learn.pdf`（配准 + 数字化训练数据）
@@ -256,6 +265,47 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - 数据变换/归一化：`datacamp.com/tutorial/how-to-normalize-data` · `geeksforgeeks.org/data-analysis/normalization-and-scaling`
 - 回归类型（指数/对数图）：`monash.edu/student-academic-success/mathematics/exponential-and-logarithmic-functions`
 - 离群值类型：`geeksforgeeks.org/data-analysis/types-of-outliers-in-data-mining`
+
+---
+
+## 环境记录 · J: 盘数据地图 + 本机自动化设置（2026-09-18 · 换电脑先看这段）
+
+> 这段是**换机器/换 Claude 会话时的接续记录**，不属于报告内容。分两类：①**只在学校机器上有效**（J: 盘路径）②**结论本身可移植**（换哪台机器都成立的决定）。
+
+### ① 只在学校机器有效：J: 盘数据地图
+
+`J:\Data` 是学校共享 GIS 数据盘，只有在**学校机器**上挂载得到；换成自己电脑/别的机器这些路径全部失效，得改用 OneDrive 或重新下载。实测过（不是只看文件名）对这个项目有用的：
+
+| 数据 | 路径 | 实测结论 |
+|---|---|---|
+| LCDB 分类 | `J:\Data\Landcover_Database_v5\...gdb`（也有 v6） | 511104 个多边形，NZTM，字段 `Class_1996/2001/2008/2012/2018`+`Name_*`；本项目训练标签种子用 `Class_2012` |
+| 地形 DEM | `J:\Data\Digital_Elevation_Models\Christchurch_LiDAR_2021-2022\CHC_LiDAR_2020_21_DEM.tif` | **1m**，完整覆盖 Port Hills AOI，无空洞，高程 0–541m（对得上 Port Hills ~500m 顶）。同目录 `bpdem`/`bphs`（Banks Peninsula）只有 25m 且北界盖不全 AOI，别用 |
+| 火前航片 | `J:\Data\Christchurch\Imagery\ChristchurchImage2015.gdb`（镶嵌数据集）+ `Tiles\` | 939 个 7.5cm(0.075m) 瓦片覆盖 AOI，"CAI URBAN IMAGERY 2015-16"，比项目里现成的 0.3m 航片更细，需要更高清底图判读时才换 |
+| LiDAR 覆盖索引 | `J:\Data\ECan_LiDAR_Extents\`、`J:\Data\LiDARTiles\` | 查某片区有没有新 LiDAR，先看这两个索引 |
+| 课程共享盘 | `J:\Courses\ERST619\` | 只有通用 lab 数据（Waimairi Beach LiDAR/大麦田/湿地监督分类/Thame 流域），**没有 Port Hills 专属数据**——真正的项目数据在自己的 OneDrive/本机项目文件夹，不在这 |
+| 同类方法参考（非本项目数据） | `J:\Current_Projects\Fire\Knysna\Sven\` | 另一个人的南非 Knysna 2017 火 refugia 识别项目，结构类似（LULC+MODIS 火+refugia 点），卡壳时可以看方法思路，**不能当数据用** |
+
+### ② 可移植的结论（换哪台机器都成立）
+
+- **地形数据源**：原计划的粗分辨率/8m DEM → 换成 **1m LiDAR（Christchurch 2020-21 期）**。理由见 report R3：完整覆盖、分辨率够细、火后 LiDAR 当地形代理是合理的（地形不随火改变，30m 网格尺度可忽略局部侵蚀）。换机器没有 J: 盘时，找项目里已经裁好的 `PortHills_DEM8m.tif` 当备选，或找 OneDrive 里存的那份 1m 裁切结果。
+- **训练标签**：LCDB **`Class_2012`** 字段（离 2017 火最近的火前期），不是 `Class_2018`。
+- **判读底图必须火前**：2015 航片，不能用火后影像（workflow.md 阶段4 已强调，这里重复一遍因为踩过这坑）。
+- **GIS 工程别塞进 git 仓库文件夹**：`.gitignore` 挡得住 git 追踪，但物理上把几个 GB 的 ArcGIS Pro 工程和轻量脚本仓库混一个目录很乱。约定：git 仓库（`a3/`）和 ArcGIS Pro 工程文件夹（`PortHills2017/`）**并排放**，不要嵌套。
+- **OneDrive 同步 + ArcGIS Pro 工程 = 容易坏**：`.gdb`/大 `.tif` 放在实时同步的 OneDrive 文件夹里，ArcGIS Pro 编辑时容易被同步锁文件搞出问题。工程文件夹要放在**不同步或本地专属**的位置。
+- **arcpy 是什么**（换电脑常问）：ArcGIS Pro 自带的 Python 包，等价于"用代码调 ArcToolbox 里的工具"，必须用 ArcGIS Pro 自己装的 python 解释器跑（`...\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe`），系统自带 python 里 `import arcpy` 用不了。
+- **建 `arcpy.mp` 地图不会自动打开标签页**：`aprx.createMap(...)` 只是把地图加进工程结构，得去 Catalog/Project 面板 → Maps 里手动双击才能看到。
+
+### ③ 本机自动化设置记录（MCP agent 桥，装过一次，换机器要重装但配方已验证）
+
+调研过让 AI agent 直接操作 ArcGIS Pro 的办法（不止一种，见下），最后选了这个免费、本地、开源的：**`arcgis-pro-mcp-free`**(`github.com/IngKevinDavid/ArcGis-Pro-MCP-Free`，MIT，审过 C# 源码，只绑 `127.0.0.1`，无对外请求)。装法（换机器照抄）：
+
+1. 下载/找到发布包（含 `package/ArcGisProMcpFree.esriAddinX` + `py-server/tcp_bridge.py` + 配套 wheel）。
+2. 建个独立 venv（用 ArcGIS Pro 自带 python 建也行，因为需要 3.12+，ArcGIS Pro 3.6 自带的是 3.13.7），装那个 wheel。
+3. 把 `.esriAddinX` 拷进 `Documents\ArcGIS\AddIns\ArcGISPro\`（不用双击装，拷贝就是装）。
+4. **`claude mcp add arcgis-pro -s user -e PORT=5876 -- <venv>\Scripts\python.exe <path>\tcp_bridge.py`**——这条**必须用户自己在终端敲**，Claude 自己跑会被安全机制拦下来（"Create Unsafe Agents"），换电脑遇到一样的拦截很正常，不是 bug。
+5. 重启 ArcGIS Pro → 功能区找 "MCP Free Bridge" 标签页 → 端口填一致（如 5876）→ 点 Start → 重启 Claude Code 会话让它认到新工具。
+
+其他同类选项（没细装，仅供以后比较）：`arcpro-mcp`(qiobn)、`arcpy-mcp-server`(zhaojj662，1300+ 工具)、Esri 官方的 **ArcGIS Pro Tasks**(GUI 录制引导式流程，官方支持但没法用代码生成，得手动录)、**Python Toolbox (.pyt)**(完全代码生成的自定义工具，本项目已经建了一个 `PortHills_Tools.pyt`，随工程文件走，换机器一起带过去就行，不依赖任何额外安装)。
 
 ---
 

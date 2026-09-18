@@ -4,18 +4,18 @@
 
 ---
 
-## 🔵 现在做：US1.1 — 认簇 → 定 5 类（有 LCDB 帮忙了）
+## 🔵 现在做：US1.6/1.7 — 补 bare-rock + 导出点表
 
-- ✅ k-means 诊断跑完 → `A3/kmeans_diagnostic/`（4 大簇 + 1 小簇；指纹 CSV + 光谱曲线已出）。
-- ✅ LCDB v5 已从学校 J: 盘拷到 OneDrive（同步中）——正好给簇认名 + reclass 成 5 类。
-- ✅ 代码进 GitHub 私有库（学校机上装 Claude Code 可 clone 接着干）。
+- ✅ k-means 诊断跑完 → `A3/kmeans_diagnostic/`。
+- ✅ LCDB 已裁到 AOI（`lcdbPorthills`，121 个多边形），按 `Class_2012` 定了 `FuelClass` 字段（对照表见下 US1.4 行）。
+- ✅ 分层撒点：4 类 × 50 = 200 点，`TrainingPoints_raw`，70/30 分（空间分块避免自相关，见下）。
+- ✅ ArcGIS Pro 工程搬到 `Desktop\PortHills\`（不再嵌在 `a3\` 里），OneDrive 留一份备份。
 
-**下一步**（等 LCDB 同步好、把 Mac 路径给我）：
-`LCDB 裁 AOI + 取 2012 期 → 叠 kmeans_k5.tif + 0.3m 航拍逐簇认名 → reclass 成 5 类 → 撒点`
-- 重点验证两对：**c0/c2**（pasture vs gorse?）、**c1/c3**（native vs pine?）分不分得开。
-- 每类点数默认 ~50（共 ~250，70/30 分）。
+**下一步**（二选一）：
+1. bare-rock 还没点——LCDB 里没有对应类，得靠 2015 航片目视核对补几个点。
+2. 或者先跳过 bare-rock，把现有 200 点在特征栈上采样出点表（US2 地基），bare-rock 点补齐了再并进去。
 
-→ LCDB 同步好告诉我路径，我写"裁→认名→reclass→撒点"脚本，一并收 US1+US2。
+→ 你定先做哪个，我接着写脚本。
 
 <!-- 做完把上面这块换成下一个 🔵，旧的勾到下面 backlog -->
 
@@ -49,13 +49,24 @@
 
 | # | 小块 | 我的推荐（你可改） | 状态 |
 |---|---|---|---|
-| 1.1 | 定 5 类 + 每类点数（k-means 诊断验证） | 诊断已跑；待叠 0.3m 航拍逐簇认名 → 定 5 类 | 🟡 |
-| 1.2 | 定判读底图（**必须火前**） | **Route B（荐）**：LCDB v4.1 当种子（火前、已有、可引用）+ 高分影像抽验；Route A：CEO 纯手点 | 🔲 |
-| 1.3 | 建工作台 | B → GEE reclass LCDB；A → 建 CEO 项目、导 AOI | 🔲 |
-| 1.4 | LCDB→5类 对照表 | 哪些 LCDB 类 → 你的哪个燃料类（核心决定） | 🔲 |
-| 1.5 | 分层布点 | stratified 每类均匀铺满 AOI | 🔲 |
-| 1.6 | 抽验/修正标签 | 高分影像上核一批，改错标 | 🔲 |
-| 1.7 | 导出 → 上传 GEE asset | 属性含一列 `class`（整数）→ 喂 US2 | 🔲 |
+| 1.1 | 定 5 类 + 每类点数（k-means 诊断验证） | 诊断已跑，4 类对上 LCDB | ✅ |
+| 1.2 | 定判读底图（**必须火前**） | Route B：LCDB `Class_2012` 当种子 + 2015 航片核验 | ✅ |
+| 1.3 | 建工作台 | LCDB 裁到 AOI，进了 ArcGIS Pro 工程 gdb（`lcdbPorthills`） | ✅ |
+| 1.4 | LCDB→5类 对照表 | 见下表，Manuka/Kanuka 按易燃性归 gorse_broom（不按 native） | ✅ |
+| 1.5 | 分层布点 | 4 类 × 50 = 200 点，`TrainingPoints_raw`，70/30 空间分块 | 🟡（缺 bare-rock） |
+| 1.6 | 抽验/修正标签 | 高分影像上核一批，改错标 + 补 bare-rock | 🔲 |
+| 1.7 | 导出 → 上传 GEE asset | 属性已有 `class_id`（整数）→ 喂 US2 | 🔲 |
+
+**1.4 的对照表（已定）**：
+
+| LCDB 原始类 | → FuelClass |
+|---|---|
+| Gorse and/or Broom、Manuka and/or Kanuka | gorse_broom |
+| Exotic Forest | exotic_pine |
+| High/Low Producing Grassland、Orchard/Vineyard、Short-rotation Cropland | pasture |
+| Broadleaved Indigenous Hardwoods、Indigenous Forest | native_scrub |
+| Built-up Area | 排除（AOI 内只 0.05ha，可忽略） |
+| （bare-rock） | LCDB 没有对应类，US1.6 补 |
 
 > ⚠️ 1.2 的坑：判读底图**得是 2017 火前**的，别用火后图（标签会和火前特征栈对不上）。
 

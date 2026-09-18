@@ -39,6 +39,7 @@
 
 ### R3 数据探索（20分 · 喂：US2 点表 + US3）
 - **空间清洗**（5）：你做了什么 + 为什么（缩放到反射率 / 云影掩膜 / 裁 AOI / NZTM）。
+  - ⭐ 已定：地形层用 **Christchurch LiDAR 2020-21（1m）**，不用原计划的粗分辨率 DEM。理由：完整覆盖 AOI 无空洞，分辨率细过唯一的本地替代（Banks Peninsula 25m，且北界盖不全 AOI）。局限：LiDAR 是火后期采集，但地形本身不因火改变（30m 网格尺度下局部侵蚀可忽略）——这条局限也要写。
 - **离群值**（5）：boxplot 看到哪类离群？**keep 还是 delete，为什么**（真信号 vs 云/传感器伪影）。
 - **正态性**（5）：哪些波段 **skew>|1| / kurt>|2|** = 非正态？列出来下结论。
 - **变换**（5）：试了哪个（log/sqrt/标准化）、为什么、改善没；**若不做 → 为什么不做**（挂"RF 尺度不变"）。
@@ -52,7 +53,12 @@
 - ⭐ 别忘写**多重共线性/VIF**（你波段+指数高度相关）。
 
 ### R5 分类（27分 · 喂：US1 训练点 + US5 可分性 + US6）
-- **训练/验证数据**（5+5）：收了什么点、怎么收（**2015 0.3m 航拍判读**）、多少、怎么分（70/30）。
+- **训练/验证数据**（5+5）：收了什么点、怎么收（**2015 0.3m 航拍判读** + LCDB `Class_2012` 当种子）、多少（4 类 × 50 = 200，bare-rock 待补）、怎么分（70/30）。
+  - ⭐ 已定：70/30 **不是逐点随机分的**，是按 300m 空间格子整块分配（同一格子的点必须分到同一边）。理由：逐点随机切分会有空间自相关，训练/验证点离得太近导致验证精度虚高，这是遥感分类评估的一个常见坑。引用：
+    - Ploton et al. 相关综述：[Spatial dependence between training and test sets: another pitfall of classification accuracy assessment in remote sensing](https://link.springer.com/article/10.1007/s10994-021-05972-1)
+    - 分块方法参考：[Choosing blocks for spatial cross-validation: lessons from a marine remote sensing case study](https://www.researchgate.net/publication/390049401_Choosing_blocks_for_spatial_cross-validation_Lessons_from_a_marine_remote_sensing_case_study)
+    - 分层抽样一般原则：[Olofsson et al. 2014, Good practices for estimating area and assessing accuracy of land change](https://research.wur.nl/en/publications/good-practices-for-estimating-area-and-assessing-accuracy-of-land/)
+  - 局限：300m 格子大小是经验取值（约 10 个 Landsat 像元），不是从半变异函数算出来的最优值，70/30 比例因此没卡死（比如 native_scrub 实际是 58/42）——这个取舍也值得在报告里说一句。
 - **可分性**（5）：JM 指数 + 光谱曲线，类分得开吗。
 - **像元/对象 + 为什么**（2）；**算法 RF + 为什么 + 引用**（5）。
 - **结果 + 混淆矩阵解读 + 挂文献**（5）；**精度评论 + 怎么改**（5）。
