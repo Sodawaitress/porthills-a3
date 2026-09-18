@@ -37,6 +37,26 @@ Kaupapa Tuhika 3 · Lincoln University · S2 2026
 
 ---
 
+## A2 反馈 → A3 必做清单（A2 得 77/100 · 别再丢同样的分）
+
+Helen 原话："Well done on improving your writing quality. It is a nice report." 丢分处对照 A3：
+
+| A2 丢分处 | A2 得分 | A3 怎么补 |
+|---|---|---|
+| ⭐ provider + 你的**预处理**描述 | 1/5 + 1/5（丢 8） | §3 清洗写全：供应商(辐射/大气/几何校正) + 你的(缩放 ×0.0000275−0.2 / 云影掩膜 / median 合成 / 裁 AOI / NZTM) |
+| ⭐ **分类体系**没说清 | 0/2 | R5 明列 5 个 FuelClass + reclass 对照表（US1.4 已修） |
+| ⭐ **无火前 field data** 验证 | 1/2 | R5 + limitations 诚实点明：LCDB 2012 + 2015 航片 = reference proxy，**非** ground truth；说清对精度评估的影响 |
+| 点数/类 + **分层**没说 | 3/5 | R5 写 200 点 · 4×50 · 空间分块（已修） |
+| ⭐ **可分性**乱引文献 | 2/5 | **只引真正用的**（JM + 光谱曲线 = Richards），别挂不相关的（A2 引了 0.3m/tone 却没用） |
+| 像元/对象、监督/非监督**理由** | 1/2 · 1/2 | R5 每个给一句为什么 |
+| §2 phrasing/sentence structure | 4/5 | 写作持续打磨 |
+| 地图布局 | 9/10 | 主图放左；inset/图例/比例尺/指北针放右；**别切边** |
+
+满分保持：流程图 10/10、数据表(good captions)、时间线 5/5、limitations 2/2。
+⚠️ Learn 上**批注版 docx**（feedback 文件）有 Helen 的**行内评论**，比 rubric 更细，另读。
+
+---
+
 ## 数据清单（一切下游的输入 · 沿用 A2 的决定）
 
 **Image variables（影像变量）**
