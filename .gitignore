@@ -1,0 +1,26 @@
+# large / derived data — lives on school J: drive or OneDrive, not in git
+*.tif
+*.tiff
+*.shp
+*.shx
+*.dbf
+*.prj
+*.gpkg
+*.gdb/
+
+# course teaching materials (under confidentiality agreement — never publish)
+*.pdf
+
+# report drafts (personal writing, kept out of the repo)
+*.docx
+~$*
+
+# os / python junk
+.DS_Store
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+venv/
+.venv/
+
+# keep: *.py, *.md, *.png, *.csv (small diagnostics/results)
