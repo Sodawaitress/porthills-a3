@@ -50,7 +50,7 @@ Kaupapa Tuhika 3 · Lincoln University · S2 2026
 | 项 | 具体 | 状态 |
 |---|---|---|
 | 类别标签 | 从 LCDB v4.1 + 航拍/高分影像目视判读的点 | 🔲 |
-| 分类体系（A2 定的 5 类） | pasture / gorse-broom(高易燃) / exotic pine / native scrub(低易燃) / bare-rock | 🟡（4/5 类有点，bare-rock 缺） |
+| 分类体系（A2 定 5 类，A3 期间扩到 6 类） | pasture / gorse-broom(高易燃) / exotic pine / native scrub(低易燃) / bare-rock / **cleared_pine**(新加，见下方法记录) | ✅ 6 类都有点了 |
 
 ⚠️ 课题原文点名："field data ... sometimes collected off **'reference imagery'** where field data are not available" —— 就是你这种情况，**光明正大用高分影像取点**，说清楚即可。
 
@@ -256,6 +256,35 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
   - 结果：4 类 × 50 = 200 点，存 `PortHills2017.gdb\TrainingPoints_raw`，字段 `FuelClass`/`class_id`(1-4，喂 GEE)/`split`。
 - **训/验切分**：**没有**逐点随机 70/30——查资料发现这样切空间自相关会让验证精度虚高（[Spatial dependence between training and test sets 论文](https://link.springer.com/article/10.1007/s10994-021-05972-1)）。改成**按 300m 格子整块分配**（同一格子的点必须分到同一边），70/30 比例因此不精确（如 native_scrub 实际 58/42），这是有意的取舍。参考：[Choosing blocks for spatial cross-validation](https://www.researchgate.net/publication/390049401_Choosing_blocks_for_spatial_cross-validation_Lessons_from_a_marine_remote_sensing_case_study)、[Olofsson et al. 2014 分层抽样](https://research.wur.nl/en/publications/good-practices-for-estimating-area-and-assessing-accuracy-of-land/)。
 - 脚本临时写在本机 `%TEMP%`，没进仓库（纯一次性数据操作，不是可复用管线）；逻辑摘要就是这段记录。
+
+## 方法记录 · US1.6 bare-rock 补点（2026-09-19）
+
+- LCDB 在 AOI 内没有对应类，只能靠地形+目视找。**第一版失败**：坡度>35° + 航片亮度高 当筛选条件——找出来的全是伐木道/冲沟（Port Hills 是玄武岩地貌，裸岩深灰色不亮，亮度筛选方向反了）。
+- **第二版**：只用**坡度>60°**（近乎垂直，不管颜色），放大核对候选簇，3 个位置目视确认是真岩石（2 处海岸悬崖 + 1 处丛林圆丘状裸岩），其余是 DEM 拼接缝直线之类的假阳性，丢弃。
+- 3 处各取 5 点（`scipy.ndimage.label` 连通域内随机采），共 15 点，插进 `TrainingPoints_raw`，`FuelClass='bare_rock'`/`class_id=5`，70/30 分（10/5）。
+- ⚠️ 15 点明显少于其他类的 50 点——**报告里要写清楚这是局限**（这类本来稀少 + LCDB 无对应类，只能从少数目视确认点位取样，不是采样疏忽）。
+- 三个确认点位坐标(NZTM)：`(1572834,5170644)` `(1569693,5168488)` `(1571720,5171724)`——回头 US1.6 剩下 4 类的抽验也可以顺手做。
+
+## 方法记录 · 坡度/坡向核查 + exotic_pine 标签修正（2026-09-19）
+
+- **坡向核查**：老师课上提过训练点要覆盖不同坡度/坡向（向阳背阳都要有）。查了 225 个点在 `Aspect1m.tif` 上的分布：`gorse_broom` 向阳明显多于背阳(11:4)——判断是真实生态规律（金雀花偏爱干燥向阳坡），不是取样偏差，写进报告当发现，不用改；`exotic_pine` 背阳只有 2 个、`bare_rock` 向阳/平地是 0——判断是取样没兜住，补点：exotic_pine 背阳坡补了 10 个；bare_rock 认真搜过向阳候选（坡度>60°里唯一像样的候选放大一看是伐木迹地边界，排除），**没找到向阳裸岩，判断是这片区域裸岩本来就集中在背阳/东向海岸悬崖**，写进报告当局限。
+- **exotic_pine 标签修正**：亮度+绿度自动筛（活树冠深绿低亮度 vs 砍伐迹地浅棕高亮度）+ 目视核对，60 个 exotic_pine 点里筛出 4 个可疑，确认 3 个真的落在采伐迹地/集材场上（不是活树），删除；1 个是年轻松树苗（种植行清晰可见，不是砍伐迹地），保留。**原因**：LCDB `Class_2012` 标签是 2012 年的，松树有采伐周期，2012–2017 间被砍过的地块标签会过期失效——这是 **contextual outlier**（标签当年没错，时间点对不上导致现在失效），已写进 report.md R3 离群值那段。
+- **最终点数（2026-09-19 收尾）**：222 点。`pasture` 35/15、`gorse_broom` 35/15、`exotic_pine` 38/19、`native_scrub` 29/21、`bare_rock` 10/5（train/valid）。
+
+## 方法记录 · US1.4 新增第 6 类 cleared_pine（2026-09-19）
+
+- **为什么加**：查 exotic_pine 训练点时发现有点落在采伐迹地上（LCDB `Class_2012` 标签是 2012 年的，松树有采伐周期，2012–2017 间被砍过的地块标签过期）。算了一下全 exotic_pine 范围（571.74ha）里"非郁闭林冠"面积：粗筛(亮度>110且绿度<5) 37.72ha(6.6%)，去掉 <100㎡ 噪点后 24.58ha——不是零star，够格单独成一类。
+- **科学依据**：Scott & Burgan (2005) 标准火行为燃料模型体系，7 大组里专门有 **Slash-Blowdown (SB)** 一组，明确把采伐剩余物跟正常林分开算——燃料结构不一样（暴露、干燥、细小 vs 树冠层+阴凉林下），会实质影响燃烧行为，混在一起算会稀释 §4/§5 燃料类型 vs 燃烧结果这条关系。
+- **踩过的坑——颜色识别这条路对这个类不管用**：试过用"跟一个确诊 slash 点颜色相似"去找同类区域(k-means 建调色板+欧氏距离阈值)：阈值松(20)匹配出 110.95ha(比粗筛还大，说明裸土/原木堆颜色太像干草坡，区分不出)；阈值紧(8)碎成 68 万个 <1㎡ 的噪点(说明真正该抓的是纹理——枝丫杂乱堆叠的质感，不是颜色，颜色这条路走不通)。**放弃颜色匹配，回退用粗筛+去噪点面积过滤的结果。**
+- **类名从 "slash" 改成 "cleared_pine"**：目视核对撒出来的点，只有部分是教科书级别的原木堆/枝丫堆（100%确定的 slash），其余是林窗/稀疏地这种"非郁闭但不一定是新鲜伐木"的过渡状态——`cleared_pine`(exotic_pine 内非郁闭林冠区)比死抠"slash"更诚实、更站得住。
+- **最终点数**：30 点（train 21 / valid 9），30m 最小间距过滤。**6 类总计 252 点**。
+
+## 方法记录 · US2 核心点表建成（2026-09-19）
+
+- 直接在本地用 `arcpy.sa.Sample()` 在 `PortHills2017_stack.tif`(22 波段) 上采样 252 个训练点，不走 GEE（点和栈都已经在本地同一个工程里，没必要绕云端）。
+- ⚠️ **踩过的坑**：`Sample()` 输出表里有两个像 ID 的字段——`OBJECTID`(表自己新编的连续 1-N，没有意义)和以输入图层命名的字段（这里叫 `TrainingPoints_raw`，才是**真实的原始点 OID**）。第一版脚本用错了 `OBJECTID` 去拼标签，因为之前删过 3 个点留下缺口，导致从那之后**一半多的行波段值和标签全部对错位**——查"输出行数比点数少"这个异常线索才发现。**教训：Sample/ExtractValues 类工具的 ID 字段，认准以输入图层命名的那个，不是工具自己生成的 OBJECTID。**
+- **QA 清洗**：查 `valid_data` 波段（标记云/云影像元），252 点里 41 个落在无效像元上（直接按坐标查栅格值查的，比只看 CSV 里 valid_data==0 更彻底，多抓到 2 个 NoData 的），删除。**最终 211 点**：pasture 45、gorse_broom 44、exotic_pine 43、native_scrub 46、bare_rock 10、cleared_pine 23。
+- **产出**：`scripts/PortHills_PointTable.csv`（211 行 × 22 波段值 + FuelClass/class_id/split）——§3-§5 统计分析的地基，US2 完成。
 
 ## Lab 资源链接（Helen 给的 + lab 出处）
 

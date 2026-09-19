@@ -33,7 +33,7 @@
 | US | 内容 | 产出 | 喂 | 状态 |
 |---|---|---|---|---|
 | **US1** | 采训练/验证点（5 类） | labeled points | §5 | 🔵 进行中 |
-| US2 | 建特征栈 + 采样成点表（GEE） | CSV 点表 | §3–§5 地基 | 🔲 脚本已草 |
+| US2 | 建特征栈 + 采样成点表 | `scripts/PortHills_PointTable.csv`，211 点×22波段 | §3–§5 地基 | ✅ |
 | US3 | §3 数据探索（离群/正态/变换） | 图 + 结论 | §3 (20) | 🔲 |
 | US4 | §4 关系（相关/散点 / dNBR 线性回归 / VIF） | 表 + 结果 | §4 (25) | 🔲 |
 | US5 | §5 可分性（JM + 光谱曲线） | 图 | §5 | 🔲 |
@@ -52,9 +52,9 @@
 | 1.1 | 定 5 类 + 每类点数（k-means 诊断验证） | 诊断已跑，4 类对上 LCDB | ✅ |
 | 1.2 | 定判读底图（**必须火前**） | Route B：LCDB `Class_2012` 当种子 + 2015 航片核验 | ✅ |
 | 1.3 | 建工作台 | LCDB 裁到 AOI，进了 ArcGIS Pro 工程 gdb（`lcdbPorthills`） | ✅ |
-| 1.4 | LCDB→5类 对照表 | 见下表，Manuka/Kanuka 按易燃性归 gorse_broom（不按 native） | ✅ |
-| 1.5 | 分层布点 | 4 类 × 50 = 200 点，`TrainingPoints_raw`，70/30 空间分块 | 🟡（缺 bare-rock） |
-| 1.6 | 抽验/修正标签 | 高分影像上核一批，改错标 + 补 bare-rock | 🔲 |
+| 1.4 | LCDB→**6**类 对照表 | 见下表，Manuka/Kanuka 按易燃性归 gorse_broom（不按 native）；新加 **cleared_pine**（exotic_pine 内非郁闭林冠区，含新鲜伐木迹地/林窗，按 Scott&Burgan 燃料模型惯例单列，见 workflow.md 方法记录） | ✅ |
+| 1.5 | 分层布点 | **6 类共 252 点**，`TrainingPoints_raw`，70/30 空间分块 | ✅ |
+| 1.6 | 抽验/修正标签 | bare-rock 补了 15 点；坡向核查+补点(exotic_pine 背阳+10)；exotic_pine 删了 3 个误落采伐迹地的点、留了 1 个真是年轻松树的 | ✅ |
 | 1.7 | 导出 → 上传 GEE asset | 属性已有 `class_id`（整数）→ 喂 US2 | 🔲 |
 
 **1.4 的对照表（已定）**：
@@ -67,6 +67,7 @@
 | Broadleaved Indigenous Hardwoods、Indigenous Forest | native_scrub |
 | Built-up Area | 排除（AOI 内只 0.05ha，可忽略） |
 | （bare-rock） | LCDB 没有对应类，US1.6 补 |
+| Exotic Forest 内的非郁闭区（亮度高+绿度低，去噪后 ~25ha，占 exotic_pine 6.6%） | **cleared_pine**（新第 6 类，US1.6 加） |
 
 > ⚠️ 1.2 的坑：判读底图**得是 2017 火前**的，别用火后图（标签会和火前特征栈对不上）。
 
