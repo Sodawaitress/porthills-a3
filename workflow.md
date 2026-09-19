@@ -332,7 +332,11 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 
 ## 方法记录 · US4 补充 RF回归对照 + CHM调研 + 道路QA + bare_rock改掩膜（2026-09-20）
 
-- **RF回归 vs 线性回归对照**（Yu 质疑线性回归 R²=0.44-0.5 是否够好，文献 Utah/LA 研究能到0.6-0.67）：查文献确认 RF 一般需要样本量达到 **N≈256-512 才开始能利用非线性优势**（低于这个区间线性/简单模型通常更稳，来源：Stat in Medicine 2023 模拟研究）；现有训练集只有~140个训练点，远低于门槛。实测：`RandomForestRegressor`（11个连续变量）验证集R²=0.371，加FuelClass独热编码到0.381，**都低于线性回归**(0.413/0.476)。结论：不是我们做错了，是样本量没到RF能发力的区间；也可能dNBR和这几个预测变量关系本来就偏线性，多加数据未必能翻盘（值得先看线性回归残差图有没有系统性弯曲再判断要不要冲样本量——留待需要时再做）。脚本：`scripts/04d_rf_regression_test.py`。
+- **RF回归 vs 线性回归对照**（Yu 质疑线性回归 R²=0.44-0.5 是否够好，文献 Utah/LA 研究能到0.6-0.67）：查文献想确认 RF 需要多大样本量才能超过线性模型。⚠️ **2026-09-20 更正**：最初引用"N≈256-512 门槛"（来源标成 Infante et al. 2023, Stat in Medicine），但 Yu 自己去查这篇文章找不到这个数字，我后来试图打开 Wiley/ResearchGate/开放PDF/PubMed 四个来源逐一核实，**全部被拒绝访问，没能读到原文确认**——这个具体数字是 WebSearch 工具自动摘要生成的，不是我本人核实过的引用，已撤回，不再在report里当作有确切来源的数字使用。能相对确认（两次独立搜索摘要一致提到，但仍未读原文）的只有一条更谨慎的说法："RF 一般需要比传统回归模型多至少150%的样本量才能达到同等表现"，这个也只能当参考，不当精确引用。
+  - 实测：`RandomForestRegressor`（11个连续变量）验证集R²=0.371，加FuelClass独热编码到0.381，**都低于线性回归**(0.413/0.476)。
+  - **后续在4类子集(排除bare_rock/cleared_pine)上追加验证**（见下方"US4补充2"记录）：176点时线性R²=-0.157(比均值还差)/RF R²=0.105，256点时线性R²=0.047/RF R²=0.403——RF随样本量明显改善，线性完全没有，这个真实测出来的对比本身就是比任何文献数字更直接的证据，不需要靠外部引用的具体门槛数字来支撑"RF需要更多数据"这个结论。
+  - 脚本：`scripts/04d_rf_regression_test.py`。
+- **数据表合并**：主表(211点)和4类扩样本(80点)原来是两个CSV，每次对比要现场pandas concat，Yu提议干脆合成一张——`scripts/PortHills_PointTable_complete.csv`(291行)，带真实`OID`列(可溯源回`TrainingPoints_raw`/`TrainingPoints_4class_expansion`两个要素类)+`source`列(`original_211`/`expansion_4class_80`)。用法：筛`source=='original_211'`复现US3-US6原有结果(211点，数字不变)；筛`FuelClass not in ['bare_rock','cleared_pine']`拿到176(原始4类)+80(扩样本)=256点做回归对比。
 - **CHM(冠层高度模型=DSM-DEM)调研**：想加一个"冠层燃料结构"变量弥补跟文献的差距。
   - 先用 `Christchurch_LiDAR_2021-2022`(2020-21年火后LiDAR)算了一版，**类均值排序不合理**(bare_rock均高6.69m反而比exotic_pine的5.37m还高，陡坡DSM-DEM水平配准误差/岩壁植被混入所致)，且**方法论上有反向因果风险**——对烧过的点，火后3-4年测到的矮植被可能是"烧毁后还没长回来"而非"火前燃料本来就矮"，会污染回归。放弃这版。
   - 找到 `J:\Data\Digital_Elevation_Models\Christchurch_Selwyn_1mDEM\CHCDEM2015.tif` + `CHCDSM2015.tif`——**2015年火前2年**的DEM+DSM，本地实际栅格（不是索引），没有反向因果问题。类均值排序完全合理：exotic_pine 7.96m(断层最高) > native_scrub 1.58m > cleared_pine 1.27m > pasture 0.91m > gorse_broom 0.74m。
