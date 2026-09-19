@@ -14,7 +14,7 @@ ee.Initialize(project='genuine-hold-427410-f0')
 AOI = ee.Geometry.Rectangle([172.55, -43.65, 172.67, -43.56])
 CSV = "/Users/sodawaitress/Desktop/ERST619/A3/cleared_pine_candidates.csv"
 PNG = "/Users/sodawaitress/Desktop/ERST619/A3/harvest_check/cleared_pine_blocks.png"
-N   = 40          # candidate points to generate
+N   = 80          # candidate points to generate
 MIN_PIX = 6       # keep connected blocks >= this many 30 m pixels (~0.5 ha)
 
 # ── 1. Hansen 2016 loss, keep only blocky patches ──
