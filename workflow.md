@@ -330,6 +330,17 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - 变量重要性：`BSI`>`pre_B5`>`pre_B4`>`pre_B3`，地形(`elev`/`northness`)排最后——光谱比地形更能区分这6类。
 - 脚本：`scripts/06_random_forest_classify.py`。§5(27分)材料齐了。
 
+## 方法记录 · US4 补充 RF回归对照 + CHM调研 + 道路QA + bare_rock改掩膜（2026-09-20）
+
+- **RF回归 vs 线性回归对照**（Yu 质疑线性回归 R²=0.44-0.5 是否够好，文献 Utah/LA 研究能到0.6-0.67）：查文献确认 RF 一般需要样本量达到 **N≈256-512 才开始能利用非线性优势**（低于这个区间线性/简单模型通常更稳，来源：Stat in Medicine 2023 模拟研究）；现有训练集只有~140个训练点，远低于门槛。实测：`RandomForestRegressor`（11个连续变量）验证集R²=0.371，加FuelClass独热编码到0.381，**都低于线性回归**(0.413/0.476)。结论：不是我们做错了，是样本量没到RF能发力的区间；也可能dNBR和这几个预测变量关系本来就偏线性，多加数据未必能翻盘（值得先看线性回归残差图有没有系统性弯曲再判断要不要冲样本量——留待需要时再做）。脚本：`scripts/04d_rf_regression_test.py`。
+- **CHM(冠层高度模型=DSM-DEM)调研**：想加一个"冠层燃料结构"变量弥补跟文献的差距。
+  - 先用 `Christchurch_LiDAR_2021-2022`(2020-21年火后LiDAR)算了一版，**类均值排序不合理**(bare_rock均高6.69m反而比exotic_pine的5.37m还高，陡坡DSM-DEM水平配准误差/岩壁植被混入所致)，且**方法论上有反向因果风险**——对烧过的点，火后3-4年测到的矮植被可能是"烧毁后还没长回来"而非"火前燃料本来就矮"，会污染回归。放弃这版。
+  - 找到 `J:\Data\Digital_Elevation_Models\Christchurch_Selwyn_1mDEM\CHCDEM2015.tif` + `CHCDSM2015.tif`——**2015年火前2年**的DEM+DSM，本地实际栅格（不是索引），没有反向因果问题。类均值排序完全合理：exotic_pine 7.96m(断层最高) > native_scrub 1.58m > cleared_pine 1.27m > pasture 0.91m > gorse_broom 0.74m。
+  - **覆盖有硬伤**：211点里87个(41%)落在2015测绘范围外(南侧山脊/火场核心区超出覆盖)，且**这87个包含全部7个bare_rock点**——无法作为US4/US6主模型的必需变量（会强制丢41%数据+丢光一整类）。改为**补充描述性证据**：170点(5类，不含bare_rock)的CHM类均值表，支撑两个论点——①结构上验证了cleared_pine独立成类是对的(1.27m vs exotic_pine 7.96m，6倍差)；②冠层高度和dNBR烈度**没有正相关**（exotic_pine最高但dNBR中等318，矮小的native_scrub/gorse_broom反而dNBR最高552/479）——支持"燃料类型比生物量/植株高度更能决定烧毁结果"这个课题核心前提。数据来源写清楚：`chm_by_oid_2015.csv`。
+  - 另外查过2011年地震应急LiDAR的图幅索引，确认3次2011飞行都实际覆盖AOI，方向上比2015更早、更保险，但实际DEM/DSM栅格分发在LINZ Data Service线上，本地J盘只有索引没有实体数据，具体图层名没能直接定位——记为诚实的"数据理论上存在但未获取"局限，不再深挖。
+- **道路QA**：`J:\Data\Christchurch\Roads\Chch_Roads.shp`，AOI内7条路段，只有中心线无宽度属性，假设5m半宽缓冲(共14.7ha，未经验证，仅供参考不作为正式地图依据)。用它反查211个训练点有没有被之前"只查own polygon"的纯度检查漏掉的道路污染——**只有2个点(OID 23, 17，都是pasture)在15m以内**(5.8m/13.7m)，标记待Yu在Pro里肉眼核验，其余209个点没有道路污染风险。
+- **bare_rock 从"分类目标"改成"已知边界掩膜"**：bare_rock是US1.6手绘数字化的已知多边形，不需要靠光谱统计去猜边界在哪，改为最终出图时直接叠加掩膜，不进RF分类训练集。重跑5类RF分类(去掉bare_rock)：**OA=0.742，Kappa=0.676**（6类基线OA=0.710/Kappa=0.638，全面改善）；`cleared_pine`这次PA=UA=1.000(满分)；`native_scrub→gorse_broom`混淆(7/20)跟6类版本几乎一样，证实这是这两类本身特征空间重叠的真实局限，不是bare_rock拖累的假象。脚本：`scripts/06b_rf_classify_5class_no_bare_rock.py`，图：`exploration/rf_confusion_matrix_5class.png`。US9出图时bare_rock/道路都用掩膜叠加，不靠分类器推断。
+
 ## 方法记录 · 像元纯度检查 + cleared_pine 换成 Hansen 方法（2026-09-19）
 
 - **像元纯度检查**（Yu 的主意）：她自己在 ArcGIS Pro 里加 buffer 核对训练点时，意识到"buffer 大小该跟 Landsat 像元对齐，用来判断这个点会不会采到混合像元"——比"buffer 用来取平均"这个思路本身更对。做法：以每个点为中心画 15m 半径的圆（对应 30m 像元宽度），检查这个圆有没有越出它自己所在的 LCDB 多边形。178 个 LCDB 来源的点里查出 28 个(15.7%)不纯，直接删除，在各自类别的多边形**向内缩 15m 后的"安全内部"**里重新撒等量的点补上——这样补的点天生保证纯，不用再筛一遍。
