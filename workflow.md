@@ -322,6 +322,14 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - 结果：`bare_rock` 跟其余5类JM全部=2.00(完全分开)；`gorse_broom` vs `native_scrub` JM=1.46，全部15对里最低，明显是弱项——跟product.md US1.1最早k-means诊断时的担忧("c1/c3 native vs pine分不分得开"，这里实际验证出问题的是native vs gorse不是native vs pine)对上了。光谱曲线图上这两类在B5/B6/B7几乎重合。脚本：`scripts/05_separability_jm.py`。
 - 对US6的提示：混淆矩阵里如果gorse_broom/native_scrub互相误判多，不是模型没调好，是这两类本身光谱就像，属于已知局限。
 
+## 方法记录 · US6 Random Forest 分类（2026-09-19）
+
+- 装了 `scikit-learn`(ArcGIS Pro 自带env原本没有，pip装的，1.9.1)。像元法(不是对象法)，特征=6波段+NDVI+BSI+elev+slope+northness(11个，RF不怕多重共线性，跟US4的VIF清理是两回事，不用共用那6个)。训练/验证严格用之前定好的空间分块split字段，不重新分。
+- `RandomForestClassifier(n_estimators=500)`，OOB accuracy=0.627，验证集 **OA=0.710，Kappa=0.638**。
+- 混淆矩阵印证 US5：`native_scrub`→`gorse_broom` 错7/20（真实native_scrub里近1/3被错分成gorse），`gorse_broom`本身UA只有0.421(预测为gorse_broom的19个里只8个真的是)——说明模型有点"过度预测gorse_broom"，native_scrub和pasture都往这边漏。`bare_rock` PA=0(3个验证点全错，样本太少的必然结果，4个训练点教不出东西)。`cleared_pine` PA=UA=1.00，分类效果最好。
+- 变量重要性：`BSI`>`pre_B5`>`pre_B4`>`pre_B3`，地形(`elev`/`northness`)排最后——光谱比地形更能区分这6类。
+- 脚本：`scripts/06_random_forest_classify.py`。§5(27分)材料齐了。
+
 ## 方法记录 · 像元纯度检查 + cleared_pine 换成 Hansen 方法（2026-09-19）
 
 - **像元纯度检查**（Yu 的主意）：她自己在 ArcGIS Pro 里加 buffer 核对训练点时，意识到"buffer 大小该跟 Landsat 像元对齐，用来判断这个点会不会采到混合像元"——比"buffer 用来取平均"这个思路本身更对。做法：以每个点为中心画 15m 半径的圆（对应 30m 像元宽度），检查这个圆有没有越出它自己所在的 LCDB 多边形。178 个 LCDB 来源的点里查出 28 个(15.7%)不纯，直接删除，在各自类别的多边形**向内缩 15m 后的"安全内部"**里重新撒等量的点补上——这样补的点天生保证纯，不用再筛一遍。

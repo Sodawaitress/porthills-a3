@@ -73,8 +73,10 @@
     - [Standard Fire Behavior Fuel Models: A Comprehensive Set (NIFC/GACC)](https://gacc.nifc.gov/oncc/docs/40-Standard%20Fire%20Behavior%20Fuel%20Models.pdf)
     - [Forest and Rural Fire Danger Rating in New Zealand — Stuart Anderson](https://fgr.nz/wp-content/uploads/2024/06/10-NZFDRS.pdf)
 - **可分性**（5）：⭐ 已做（`exploration/spectral_profile_6class.png` + JM矩阵，脚本`scripts/05_separability_jm.py`）。JM指数(0~2，越大越好分)用6波段+NDVI+BSI算：**`bare_rock` 跟其余5类全部完全分开(JM=2.00)**；其余类间大多也分得不错(JM 1.9-2.0)；但 **`gorse_broom` vs `native_scrub`(JM=1.46)明显是最弱的一对**——光谱曲线图上这两条线在B5/B6/B7几乎重合。这**直接呼应了项目最早期(US1.1 k-means诊断)就担心的那个问题**("native vs gorse分不分得开")，现在用JM给出了定量证据：这两类确实存在真实的光谱混淆风险，§5分类结果如果这两类互相误判多，这里就是原因，不是模型的锅。引用 Richards (2013) *Remote Sensing Digital Image Analysis* 的JM公式。
-- **像元/对象 + 为什么**（2）；**算法 RF + 为什么 + 引用**（5）。
-- **结果 + 混淆矩阵解读 + 挂文献**（5）；**精度评论 + 怎么改**（5）。
+- **像元/对象 + 为什么**（2）：像元法(pixel-based)，不是对象法(object-based)。理由：A2就倾向像元RF；训练点本来就是逐像元采样的，跟点表结构一致；对象法要先分割，本项目训练数据量不大(211点)，分割反而可能引入额外噪声。
+- **算法 RF + 为什么 + 引用**（5）：Random Forest。理由：样本量小(每类10-46个)时比深度学习更稳定、不容易过拟合；能输出变量重要性，方便解释"哪个波段/地形对分类贡献大"；不需要假设正态分布，跟本项目§3发现的"混合类别非正态"问题无缝衔接。用 `sklearn.ensemble.RandomForestClassifier`(500棵树)，训练/验证用之前定好的空间分块split，不是重新随机分。
+- **结果 + 混淆矩阵解读 + 挂文献**（5）：⭐ 已跑（`exploration/rf_confusion_matrix.png`，脚本`scripts/06_random_forest_classify.py`）。**OA=0.710，Kappa=0.638**(按Landis&Koch(1977)分级，0.61-0.80="substantial agreement"，中等偏上)。混淆矩阵最大的误判：**`native_scrub`→`gorse_broom` 错了7个**(20个真实native_scrub里)，`gorse_broom`→`exotic_pine`/`native_scrub`各错2个——**跟US5的JM指数(gorse_broom vs native_scrub=1.46，全部15对最低)完全对上**，不是模型没调好，是这两类本身光谱就像。`cleared_pine`(PA=UA=1.00)和`pasture`/`exotic_pine`(PA=0.8)分类效果好。特征重要性：`BSI`/`pre_B5`/`pre_B4`/`pre_B3`最重要，地形变量(`elev`/`northness`)排最后——光谱信息比地形对分类贡献更大。
+- **精度评论 + 怎么改**（5）：`bare_rock` **PA=0，完全没分对**——3个验证点全错，直接原因是训练点太少(去重后只有7个独立点，4训练/3验证)，这个类的局限从US1就已经写明，这里是必然结果，不是新问题。改进方向：①gorse_broom/native_scrub这对，可以加入更能区分二者的特征(比如红边指数，本项目Landsat8没有，S2才有，见workflow.md火前必须用L8的局限)；②bare_rock需要想办法多补点(哪怕靠人工数字化)，样本量太小任何分类器都学不好；③可以试试RF回归里筛出来的关键变量(pre_B5/NDVI)加权或做特征选择，减少弱变量干扰。
 
 ### R6 流程图（10分 · 喂：US8）
 - 放**更新版**流程图（含 §3/§4 统计层，见 US8 的 4 个框）+ 一段 **way forward**（往 A4 最终分类+精度走）。
