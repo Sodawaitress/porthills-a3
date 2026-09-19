@@ -309,6 +309,13 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - **QA 清洗**：查 `valid_data` 波段（标记云/云影像元），252 点里 41 个落在无效像元上（直接按坐标查栅格值查的，比只看 CSV 里 valid_data==0 更彻底，多抓到 2 个 NoData 的），删除。**最终 211 点**：pasture 45、gorse_broom 44、exotic_pine 43、native_scrub 46、bare_rock 10、cleared_pine 23。
 - **产出**：`scripts/PortHills_PointTable.csv`（211 行 × 22 波段值 + FuelClass/class_id/split）——§3-§5 统计分析的地基，US2 完成。
 
+## 方法记录 · US4 dNBR 回归 + VIF 清理（2026-09-19）
+
+- 决定#2 定案：选①，dNBR 当连续 Y，预测变量 = 6波段+NDVI+BSI+地形(排除NBR_pre，因为dNBR本身就是NBR_pre−NBR_post算出来的，用它当预测变量有点循环论证)。
+- 相关表：`NDVI`(0.475)、`BSI`(-0.460) 最强，`elev`(-0.014) 几乎不相关。
+- VIF 原始严重超标(BSI=99、pre_B6=95、NDVI=89...)，按 lab 教的规矩迭代删最高的，5轮删掉 BSI/B6/B2/B3/B4，收敛到6个变量全部≤7.5(`pre_B5`/`pre_B7`/`NDVI`/`elev`/`slope`/`northness`)。
+- 清理后模型：R²=0.413，RMSE=231.55。加 `FuelClass` 哑变量后 R²=0.476，F检验 p=0.0004 高度显著——**跟查到的 2024 Utah 论文结论相反**(他们发现类别变量加了不提升)，猜测因为本项目6类是专门为火险设计的(含cleared_pine/bare_rock)，比通用土地覆盖类别信息量更大。脚本：`scripts/04_regression_dnbr.py` + `04b_vif_cleanup.py`。
+
 ## 方法记录 · 像元纯度检查 + cleared_pine 换成 Hansen 方法（2026-09-19）
 
 - **像元纯度检查**（Yu 的主意）：她自己在 ArcGIS Pro 里加 buffer 核对训练点时，意识到"buffer 大小该跟 Landsat 像元对齐，用来判断这个点会不会采到混合像元"——比"buffer 用来取平均"这个思路本身更对。做法：以每个点为中心画 15m 半径的圆（对应 30m 像元宽度），检查这个圆有没有越出它自己所在的 LCDB 多边形。178 个 LCDB 来源的点里查出 28 个(15.7%)不纯，直接删除，在各自类别的多边形**向内缩 15m 后的"安全内部"**里重新撒等量的点补上——这样补的点天生保证纯，不用再筛一遍。
