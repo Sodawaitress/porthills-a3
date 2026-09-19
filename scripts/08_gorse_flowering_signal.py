@@ -11,7 +11,12 @@ https://www.researchgate.net/publication/230694091)。
 是为了避开"单张影像刚好被云挡住"这个文献里提到的已知限制。
 
 跑法：在已装好+认证过 earthengine-api 的机器上跑。
-输出：scripts/gorse_flowering_by_point.csv
+输出：scripts/gorse_flowering_by_point.csv，用真实OID(TrainingPoints_wgs84.csv
+里的OID列)做join key，不用行号。
+
+⚠️ 2026-09-20更新：TrainingPoints_wgs84.csv 已经从215点(旧版，含4个后来删掉的
+重复/离群点)重新导出成211点(当前canonical版本)，带真实OID列。如果你本地这份
+CSV还是旧的215行版本，先 git pull 一下。
 """
 import ee, os
 import pandas as pd
@@ -51,18 +56,18 @@ composite = spring_scaled.median().select(
     ['SR_B2', 'SR_B3', 'SR_B4', 'SR_B5', 'SR_B6', 'SR_B7'])  # Blue/Green/Red/NIR/SWIR1/SWIR2
 
 features = []
-for i, row in pts_df.iterrows():
+for _, row in pts_df.iterrows():
     geom = ee.Geometry.Point([row['lon'], row['lat']])
-    features.append(ee.Feature(geom, {'point_id': int(i)}))
+    features.append(ee.Feature(geom, {'OID': int(row['OID'])}))
 fc = ee.FeatureCollection(features)
 
 sampled = composite.sampleRegions(collection=fc, scale=30, geometries=False)
 result = sampled.getInfo()
 
 rows = [f['properties'] for f in result['features']]
-out_df = pd.DataFrame(rows).sort_values('point_id').reset_index(drop=True)
-out_df = out_df.merge(pts_df[['lon', 'lat', 'FuelClass', 'class_id', 'split']],
-                       left_on='point_id', right_index=True, how='left')
+out_df = pd.DataFrame(rows).sort_values('OID').reset_index(drop=True)
+out_df = out_df.merge(pts_df[['OID', 'lon', 'lat', 'FuelClass', 'class_id', 'split']],
+                       on='OID', how='left')
 
 # 花期"黄度"指标: 黄色反射红+绿高、蓝低 -> 用 (Red+Green)/2 - Blue 做一个简单黄度指数
 out_df['yellow_index'] = (out_df['SR_B4'] + out_df['SR_B3']) / 2 - out_df['SR_B2']

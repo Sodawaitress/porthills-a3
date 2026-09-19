@@ -5,8 +5,13 @@ Landsat 8 没有红边波段，S2才有，所以这是L8体系里补不出来的
 
 跑法：在已经装好+认证过 earthengine-api 的那台机器上跑：
   python 07_s2_rededge_extract.py
-输出：scripts/s2_rededge_by_point.csv，跟 TrainingPoints_wgs84.csv 按行号对应
-（同一份文件生成的，行顺序不会变，但保险起见输出里也带了 lon/lat 方便核对）。
+输出：scripts/s2_rededge_by_point.csv，用真实 OID（TrainingPoints_wgs84.csv 里的
+OID列，来自 TrainingPoints_raw 的 OID@，不是行号）做join key -- 之前 Sample()
+join错过一次(用错了字段)，这里直接从头用真实OID，不留隐患。
+
+⚠️ 2026-09-20更新：TrainingPoints_wgs84.csv 已经从215点(旧版，含4个后来删掉的
+重复/离群点)重新导出成211点(当前canonical版本)，带真实OID列。如果你本地这份
+CSV还是旧的215行版本，先 git pull 一下。
 """
 import ee, os
 import pandas as pd
@@ -37,9 +42,9 @@ print("火前候选影像数:", n_images)
 composite = s2.median().select(['B5', 'B6', 'B7', 'B4', 'B8'])  # 红边x3 + Red + NIR(方便顺手算个红边NDVI)
 
 features = []
-for i, row in pts_df.iterrows():
+for _, row in pts_df.iterrows():
     geom = ee.Geometry.Point([row['lon'], row['lat']])
-    features.append(ee.Feature(geom, {'point_id': int(i)}))
+    features.append(ee.Feature(geom, {'OID': int(row['OID'])}))
 fc = ee.FeatureCollection(features)
 
 sampled = composite.sampleRegions(collection=fc, scale=10, geometries=False)
@@ -50,9 +55,9 @@ for f in result['features']:
     props = f['properties']
     rows.append(props)
 
-out_df = pd.DataFrame(rows).sort_values('point_id').reset_index(drop=True)
-out_df = out_df.merge(pts_df[['lon', 'lat', 'FuelClass', 'class_id', 'split']],
-                       left_on='point_id', right_index=True, how='left')
+out_df = pd.DataFrame(rows).sort_values('OID').reset_index(drop=True)
+out_df = out_df.merge(pts_df[['OID', 'lon', 'lat', 'FuelClass', 'class_id', 'split']],
+                       on='OID', how='left')
 out_df.to_csv(OUT_CSV, index=False)
 print("wrote ->", OUT_CSV)
 print("匹配到红边值的点数:", len(out_df), "/", len(pts_df))
