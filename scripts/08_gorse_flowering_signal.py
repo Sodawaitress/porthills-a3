@@ -13,13 +13,14 @@ https://www.researchgate.net/publication/230694091)。
 跑法：在已装好+认证过 earthengine-api 的机器上跑。
 输出：scripts/gorse_flowering_by_point.csv
 """
-import ee
+import ee, os
 import pandas as pd
 
 ee.Initialize(project='genuine-hold-427410-f0')
 
-PTS_CSV = r"C:\Users\zhouy3d\Desktop\a3\scripts\TrainingPoints_wgs84.csv"
-OUT_CSV = r"C:\Users\zhouy3d\Desktop\a3\scripts\gorse_flowering_by_point.csv"
+HERE = os.path.dirname(os.path.abspath(__file__))          # 相对路径，两台机都能跑
+PTS_CSV = os.path.join(HERE, "TrainingPoints_wgs84.csv")
+OUT_CSV = os.path.join(HERE, "gorse_flowering_by_point.csv")
 
 pts_df = pd.read_csv(PTS_CSV)
 print("点数:", len(pts_df))

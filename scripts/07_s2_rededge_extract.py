@@ -8,13 +8,14 @@ Landsat 8 没有红边波段，S2才有，所以这是L8体系里补不出来的
 输出：scripts/s2_rededge_by_point.csv，跟 TrainingPoints_wgs84.csv 按行号对应
 （同一份文件生成的，行顺序不会变，但保险起见输出里也带了 lon/lat 方便核对）。
 """
-import ee
+import ee, os
 import pandas as pd
 
 ee.Initialize(project='genuine-hold-427410-f0')
 
-PTS_CSV = r"C:\Users\zhouy3d\Desktop\a3\scripts\TrainingPoints_wgs84.csv"
-OUT_CSV = r"C:\Users\zhouy3d\Desktop\a3\scripts\s2_rededge_by_point.csv"
+HERE = os.path.dirname(os.path.abspath(__file__))          # 相对路径，两台机都能跑
+PTS_CSV = os.path.join(HERE, "TrainingPoints_wgs84.csv")
+OUT_CSV = os.path.join(HERE, "s2_rededge_by_point.csv")
 
 pts_df = pd.read_csv(PTS_CSV)
 print("点数:", len(pts_df))
