@@ -8,7 +8,7 @@ US1.6 辅助 - 拉 2017 年火前最后一段时间的 Sentinel-2 真彩色图�
 ★ 只需要改 SUSPECT_POINTS（想核对哪几个点就填哪几个）。
 """
 import ee
-ee.Initialize()
+ee.Initialize(project='genuine-hold-427410-f0')  # 新版 ee 必须给 project
 
 # ───────────────────────────────────────────────────────────
 # 0. 要核对的可疑点（从 ArcGIS Pro 目视抽查里挑出来的）
@@ -27,7 +27,12 @@ SUSPECT_POINTS = {
 PRE_START = '2016-10-01'
 PRE_END   = '2017-02-12'
 
-s2 = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+# ⚠️ 必须先按位置筛(filterBounds)，否则会从全球挑图、选中的根本不在 Port Hills
+AOI = ee.Geometry.Rectangle([172.55, -43.65, 172.67, -43.56])
+# ⚠️ 用 L1C TOA(S2_HARMONIZED)不用 L2A/SR：Port Hills 火前 S2 地表反射率不存在
+#    (SR 这片 2017-03 才有)。目视核对点位用 TOA 真彩色足够。
+s2 = (ee.ImageCollection('COPERNICUS/S2_HARMONIZED')
+        .filterBounds(AOI)
         .filterDate(PRE_START, PRE_END)
         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20)))
 
