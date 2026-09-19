@@ -4,12 +4,11 @@
 
 ---
 
-## 🔵 现在做：US5 — §5 可分性（JM指数 + 光谱曲线）
+## 🔵 现在做：US6 — §5 分类（RF + 混淆矩阵）
 
-- ✅ US1-US4 全部完成，report.md R3/R4 材料齐了（相关表/VIF/回归/散点全出图出数）。
-- US4 最后结论：dNBR ~ pre_B5+pre_B7+NDVI+elev+slope+northness，R²=0.41→加FuelClass到0.48（p=0.0004，类别变量显著，反直觉发现）。
+- ✅ US1-US5 全部完成。US5 结论：`bare_rock` 跟谁都完全分开(JM=2.00)；**`gorse_broom` vs `native_scrub` 最难分(JM=1.46)**——呼应了项目最早期k-means诊断就担心的那个问题，现在有定量证据了。
 
-**下一步**：US5 —— 6 类之间光谱可分性（JM指数 + 光谱曲线），喂 §5 训练数据/可分性那部分。
+**下一步**：US6 —— 像元法 + Random Forest 分类 + 混淆矩阵。gorse_broom/native_scrub 这对如果混淆矩阵里错得多，正好能对上US5的发现。
 
 <!-- 做完把上面这块换成下一个 🔵，旧的勾到下面 backlog -->
 

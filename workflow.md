@@ -316,6 +316,12 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - VIF 原始严重超标(BSI=99、pre_B6=95、NDVI=89...)，按 lab 教的规矩迭代删最高的，5轮删掉 BSI/B6/B2/B3/B4，收敛到6个变量全部≤7.5(`pre_B5`/`pre_B7`/`NDVI`/`elev`/`slope`/`northness`)。
 - 清理后模型：R²=0.413，RMSE=231.55。加 `FuelClass` 哑变量后 R²=0.476，F检验 p=0.0004 高度显著——**跟查到的 2024 Utah 论文结论相反**(他们发现类别变量加了不提升)，猜测因为本项目6类是专门为火险设计的(含cleared_pine/bare_rock)，比通用土地覆盖类别信息量更大。脚本：`scripts/04_regression_dnbr.py` + `04b_vif_cleanup.py`。
 
+## 方法记录 · US5 可分性 JM 指数（2026-09-19）
+
+- 特征空间：6波段+NDVI+BSI（跟最早 kmeans 诊断用的一致），JM公式引 Richards(2013)。
+- 结果：`bare_rock` 跟其余5类JM全部=2.00(完全分开)；`gorse_broom` vs `native_scrub` JM=1.46，全部15对里最低，明显是弱项——跟product.md US1.1最早k-means诊断时的担忧("c1/c3 native vs pine分不分得开"，这里实际验证出问题的是native vs gorse不是native vs pine)对上了。光谱曲线图上这两类在B5/B6/B7几乎重合。脚本：`scripts/05_separability_jm.py`。
+- 对US6的提示：混淆矩阵里如果gorse_broom/native_scrub互相误判多，不是模型没调好，是这两类本身光谱就像，属于已知局限。
+
 ## 方法记录 · 像元纯度检查 + cleared_pine 换成 Hansen 方法（2026-09-19）
 
 - **像元纯度检查**（Yu 的主意）：她自己在 ArcGIS Pro 里加 buffer 核对训练点时，意识到"buffer 大小该跟 Landsat 像元对齐，用来判断这个点会不会采到混合像元"——比"buffer 用来取平均"这个思路本身更对。做法：以每个点为中心画 15m 半径的圆（对应 30m 像元宽度），检查这个圆有没有越出它自己所在的 LCDB 多边形。178 个 LCDB 来源的点里查出 28 个(15.7%)不纯，直接删除，在各自类别的多边形**向内缩 15m 后的"安全内部"**里重新撒等量的点补上——这样补的点天生保证纯，不用再筛一遍。

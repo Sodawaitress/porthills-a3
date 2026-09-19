@@ -72,7 +72,7 @@
     - [Fuel model (Scott & Burgan 非燃料类 NB1/NB8/NB9)](https://en.wikipedia.org/wiki/Fuel_model)
     - [Standard Fire Behavior Fuel Models: A Comprehensive Set (NIFC/GACC)](https://gacc.nifc.gov/oncc/docs/40-Standard%20Fire%20Behavior%20Fuel%20Models.pdf)
     - [Forest and Rural Fire Danger Rating in New Zealand — Stuart Anderson](https://fgr.nz/wp-content/uploads/2024/06/10-NZFDRS.pdf)
-- **可分性**（5）：JM 指数 + 光谱曲线，类分得开吗。
+- **可分性**（5）：⭐ 已做（`exploration/spectral_profile_6class.png` + JM矩阵，脚本`scripts/05_separability_jm.py`）。JM指数(0~2，越大越好分)用6波段+NDVI+BSI算：**`bare_rock` 跟其余5类全部完全分开(JM=2.00)**；其余类间大多也分得不错(JM 1.9-2.0)；但 **`gorse_broom` vs `native_scrub`(JM=1.46)明显是最弱的一对**——光谱曲线图上这两条线在B5/B6/B7几乎重合。这**直接呼应了项目最早期(US1.1 k-means诊断)就担心的那个问题**("native vs gorse分不分得开")，现在用JM给出了定量证据：这两类确实存在真实的光谱混淆风险，§5分类结果如果这两类互相误判多，这里就是原因，不是模型的锅。引用 Richards (2013) *Remote Sensing Digital Image Analysis* 的JM公式。
 - **像元/对象 + 为什么**（2）；**算法 RF + 为什么 + 引用**（5）。
 - **结果 + 混淆矩阵解读 + 挂文献**（5）；**精度评论 + 怎么改**（5）。
 
