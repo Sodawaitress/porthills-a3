@@ -7,23 +7,18 @@ Kaupapa Tuhika 3 · Lincoln University · S2 2026
 
 ---
 
-## 📍 当前数据文件清单（永远维护成最新状态，不是流水账——换机器/换会话先看这块）
+## 📍 当前数据文件清单（永远维护成最新状态，改了就更新这里）
 
-> 下面每条方法记录都是**发生时**写的历史，按时间顺序读会很乱。这张表只回答一个问题：
-> **"现在(最新)哪个文件是权威的、干什么用的"**——改了文件结构就立刻更新这张表，别等回头补。
-
-| 文件 | 行数 | 用途 | 状态 |
-|---|---|---|---|
-| `scripts/PortHills_PointTable.csv` | 211 (6类) | **US1-US6 官方结果的唯一数据源**——report.md 里所有数字(OA=0.71/0.742, R²=0.41-0.48等)都来自这份，**不要改它** | ✅ 权威 |
-| `scripts/PortHills_PointTable_complete.csv` | 291 = 211原始+80扩样本 | **只用于US4的"RF要不要更多数据"侧实验**(176点vs256点对比)，带`source`列区分来源。**不用于分类(US6)**，因为80个扩样本点只覆盖4类，混进分类会破坏类别平衡 | ✅ 侧实验专用，別跟上面混 |
-| `scripts/PortHills_4class_expansion.csv` | 80 (4类，不含bare_rock/cleared_pine) | 上面`_complete.csv`的原始材料，已并入，单独留着方便溯源 | 已被合并，非独立使用 |
-| `scripts/TrainingPoints_wgs84.csv` | 211 | 211点的经纬度版，喂给GEE脚本(07/08/09)用 | ✅ 权威(2026-09-20修过OID join bug，之前215点旧版已删) |
-| `cleared_pine_blocks.geojson` | 待定 | **cleared_pine 的真实多边形边界**(2026-09-20新增，Hansen方法算出来但之前没导出过)，等GEE机器跑完`09_export_cleared_pine_polygon.py`推回来 | 🔲 进行中 |
-| gdb `TrainingPoints_raw` | 211 | 上面CSV对应的**几何数据源**，`OID`字段是唯一可靠的join key(不要用Sample()自己生成的OBJECTID) | ✅ 权威 |
-| gdb `TrainingPoints_4class_expansion` | 88(80个valid_data=1) | 80点扩样本的几何数据源 | 侧实验专用 |
-| gdb `lcdbPorthills` | 覆盖全AOI | FuelClass只有4类完整覆盖(pasture/gorse_broom/exotic_pine/broadleaf_scrub)，**bare_rock和cleared_pine都没有多边形**(2026-09-20核实，不是处理错误，是原始数据/流程从没产出过) | ⚠️ 已知空白，US7/US9要处理 |
-
-**一句话记住**：分类/report里的数字 = 永远查`PortHills_PointTable.csv`(211)；`_complete.csv`(291)只在讨论"样本量对RF有没有帮助"这个话题时才会出现。
+| 文件 | 行数 | 用途 |
+|---|---|---|
+| `scripts/PortHills_PointTable.csv` | **202**(6类，2026-09-20更新) | US1-US6数据源；⚠️cleared_pine从28→19点重建过，US3-US6里涉及cleared_pine的数字待重跑 |
+| `scripts/PortHills_PointTable_complete.csv` | 291 (211+80，⚠️旧版，cleared_pine未更新) | US4样本量侧实验用，待重建 |
+| `scripts/PortHills_4class_expansion.csv` | 80 (4类，不受cleared_pine问题影响) | `_complete.csv`原始材料 |
+| `scripts/TrainingPoints_wgs84.csv` | 211 (⚠️旧版，cleared_pine未更新) | 喂GEE脚本(07/08)用，待重新导出 |
+| gdb `cleared_pine_real` | 4块，6.698ha | cleared_pine真实边界(Hansen∩exotic_pine)，可当refugia排除掩膜 |
+| gdb `TrainingPoints_raw` | **202**(2026-09-20: cleared_pine 28→19) | 几何数据源，join key用`OID`字段 |
+| gdb `TrainingPoints_4class_expansion` | 88(80个valid) | 80点扩样本几何数据源，不受cleared_pine问题影响 |
+| gdb `lcdbPorthills` | 覆盖全AOI | FuelClass完整覆盖4类；bare_rock无多边形(不可修)，cleared_pine多边形已找到(`cleared_pine_real`) |
 
 ---
 
@@ -363,7 +358,15 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
   - **覆盖有硬伤**：211点里87个(41%)落在2015测绘范围外(南侧山脊/火场核心区超出覆盖)，且**这87个包含全部7个bare_rock点**——无法作为US4/US6主模型的必需变量（会强制丢41%数据+丢光一整类）。改为**补充描述性证据**：170点(5类，不含bare_rock)的CHM类均值表，支撑两个论点——①结构上验证了cleared_pine独立成类是对的(1.27m vs exotic_pine 7.96m，6倍差)；②冠层高度和dNBR烈度**没有正相关**（exotic_pine最高但dNBR中等318，矮小的broadleaf_scrub/gorse_broom反而dNBR最高552/479）——支持"燃料类型比生物量/植株高度更能决定烧毁结果"这个课题核心前提。数据来源写清楚：`chm_by_oid_2015.csv`。
   - 另外查过2011年地震应急LiDAR的图幅索引，确认3次2011飞行都实际覆盖AOI，方向上比2015更早、更保险，但实际DEM/DSM栅格分发在LINZ Data Service线上，本地J盘只有索引没有实体数据，具体图层名没能直接定位——记为诚实的"数据理论上存在但未获取"局限，不再深挖。
 - **道路QA**：`J:\Data\Christchurch\Roads\Chch_Roads.shp`，AOI内7条路段，只有中心线无宽度属性，假设5m半宽缓冲(共14.7ha，未经验证，仅供参考不作为正式地图依据)。用它反查211个训练点有没有被之前"只查own polygon"的纯度检查漏掉的道路污染——**只有2个点(OID 23, 17，都是pasture)在15m以内**(5.8m/13.7m)，标记待Yu在Pro里肉眼核验，其余209个点没有道路污染风险。
-- **bare_rock 从RF分类训练集里剔除**：原因是训练点仅7个(去重后)，任何分类器都学不出稳定边界(6类版本验证集PA=0，3个验证点全错)。⚠️ **2026-09-20更正**：之前这里写过"bare_rock是US1.6手绘数字化的已知多边形，出图时可以直接叠加掩膜"——**这句是错的，已核实并撤回**。查了整个gdb（`arcpy.ListFeatureClasses()`/`ListDatasets()`遍历过，见2026-09-20 US7设计讨论），`bare_rock`从来没有过完整的多边形边界，只有7个点，不存在能拿来叠加的掩膜图层。所以剔除bare_rock解决的只是"分类训练"这一步的问题，**不解决"全栅格地图上bare_rock该画在哪"这个问题**——这部分在任何wall-to-wall分类图/refugia图上都是已知空白，除非之后手动数字化或用坡度/亮度阈值做一层新的近似（本身要另外验证，不算"补回"原来的数据）。重跑5类RF分类(去掉bare_rock)：**OA=0.742，Kappa=0.676**（6类基线OA=0.710/Kappa=0.638，全面改善，脚本`scripts/06_random_forest_classify.py`）；`cleared_pine`这次PA=UA=1.000(满分)；`broadleaf_scrub→gorse_broom`混淆(7/20)跟6类版本几乎一样，证实这是这两类本身特征空间重叠的真实局限，不是bare_rock拖累的假象。脚本：`scripts/06b_rf_classify_5class_no_bare_rock.py`，图：`exploration/rf_confusion_matrix_5class.png`。
+- **bare_rock 从RF分类训练集里剔除**：原因是训练点仅7个(去重后)，任何分类器都学不出稳定边界(6类版本验证集PA=0，3个验证点全错)。⚠️ **2026-09-20更正**：之前这里写过"bare_rock是US1.6手绘数字化的已知多边形，出图时可以直接叠加掩膜"——**这句是错的，已核实并撤回**。查了整个gdb（`arcpy.ListFeatureClasses()`/`ListDatasets()`遍历过，见2026-09-20 US7设计讨论），`bare_rock`从来没有过完整的多边形边界，只有7个点，不存在能拿来叠加的掩膜图层。所以剔除bare_rock解决的只是"分类训练"这一步的问题，**不解决"全栅格地图上bare_rock该画在哪"这个问题**——这部分在任何wall-to-wall分类图/refugia图上都是已知空白，除非之后手动数字化或用坡度/亮度阈值做一层新的近似（本身要另外验证，不算"补回"原来的数据）。重跑5类RF分类(去掉bare_rock)：**OA=0.742，Kappa=0.676**（6类基线OA=0.710/Kappa=0.638，全面改善，脚本`scripts/06_random_forest_classify.py`）。⚠️ **2026-09-20更正**：这次结果里 `cleared_pine`PA=UA=1.000(满分)这个数字**已作废**，因为用的还是28个位置有问题的cleared_pine点(见下一条)，待用新点重跑。`broadleaf_scrub→gorse_broom`混淆(7/20)跟6类版本几乎一样，这条不受cleared_pine影响，仍然成立。脚本：`scripts/06b_rf_classify_5class_no_bare_rock.py`，图：`exploration/rf_confusion_matrix_5class.png`（待重新出图）。
+
+## 方法记录 · cleared_pine 重新采点（2026-09-20）
+
+- **发现**：`06_cleared_pine_from_hansen.py` 算出的区块多边形(`block_fc`)从来没导出保存过，只用来画缩略图。补导出后核对，28个训练点里只有2个真的落在`exotic_pine`范围内；其余11个落在`gorse_broom`、10个在AOI范围外、3个在`broadleaf_scrub`、2个在无多边形空隙——之前"cleared_pine dNBR均值≈20(几乎不燃)"这个结论建立在这批位置错误的点上，不可信。
+- **重新定义**：Hansen `lossyear==16`(参数不变) **∩ `exotic_pine`多边形**，真实面积仅6.7ha(4块)，15m纯度收缩后1.43ha，实际能撒 **19个点**(30m最小间距)。已替换`TrainingPoints_raw`里的旧28个点，`PortHills_PointTable.csv`已用新点重建(**211→202点**)。
+- **新问题**：19个新点里16个落在同一片被火后影像云/阴影覆盖的区域，`post_B4`/`dNBR`为空值，只有3个点有完整火前+火后数据。这3个点dNBR = 257、730、242——**中度到重度都有，不是"几乎不燃"**，方向上支持"slash燃料易燃"而非"低燃料"的假设(Yu指出的)，但n=3太小不能下统计结论。
+- **待办**：`scripts/10_check_postfire_alt_dates.py`（GEE机器跑）查这19个点在2017-02-13~06-01之间有没有更干净的火后过境日期，能救回更多点；查完再决定是接受n=3的定性观察还是能补数据。
+- **不受影响**：19个新点的火前波段(`pre_B2-B7`/`NDVI`/`BSI`等)全部完整，US6分类训练可以用；只有dNBR/severity相关的分析(US4回归、per-class dNBR描述)受影响。
 
 ## 方法记录 · 像元纯度检查 + cleared_pine 换成 Hansen 方法（2026-09-19）
 
