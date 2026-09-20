@@ -365,8 +365,9 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - **发现**：`06_cleared_pine_from_hansen.py` 算出的区块多边形(`block_fc`)从来没导出保存过，只用来画缩略图。补导出后核对，28个训练点里只有2个真的落在`exotic_pine`范围内；其余11个落在`gorse_broom`、10个在AOI范围外、3个在`broadleaf_scrub`、2个在无多边形空隙——之前"cleared_pine dNBR均值≈20(几乎不燃)"这个结论建立在这批位置错误的点上，不可信。
 - **重新定义**：Hansen `lossyear==16`(参数不变) **∩ `exotic_pine`多边形**，真实面积仅6.7ha(4块)，15m纯度收缩后1.43ha，实际能撒 **19个点**(30m最小间距)。已替换`TrainingPoints_raw`里的旧28个点，`PortHills_PointTable.csv`已用新点重建(**211→202点**)。
 - **新问题**：19个新点里16个落在同一片被火后影像云/阴影覆盖的区域，`post_B4`/`dNBR`为空值，只有3个点有完整火前+火后数据。这3个点dNBR = 257、730、242——**中度到重度都有，不是"几乎不燃"**，方向上支持"slash燃料易燃"而非"低燃料"的假设(Yu指出的)，但n=3太小不能下统计结论。
-- **待办**：`scripts/10_check_postfire_alt_dates.py`（GEE机器跑）查这19个点在2017-02-13~06-01之间有没有更干净的火后过境日期，能救回更多点；查完再决定是接受n=3的定性观察还是能补数据。
-- **不受影响**：19个新点的火前波段(`pre_B2-B7`/`NDVI`/`BSI`等)全部完整，US6分类训练可以用；只有dNBR/severity相关的分析(US4回归、per-class dNBR描述)受影响。
+- **补数据尝试(2026-09-20)——已放弃**：`10_check_postfire_alt_dates.py`找到2017-04-22影像19/19点全干净，`11_fill_cleared_pine_postfire.py`用这天重采样。核对时发现：①对方脚本算的dNBR少乘了1000、少减了偏移量(真实公式是`dNBR=(NBR_pre-NBR_post)×1000-120.4596`，用现有186个有效点回归验证，R²=0.9999999999999944)；②就算修正公式，拿4月22日(火后2个多月，植被已恢复)跟原始火后影像算出来的dNBR对比，3个能对照的点差了22%~78%，方向还不一致——**换日期会引入真实的系统性偏差，不是能忽略的噪声**。已决定放弃，不合并这份数据。
+- **最终决定**：cleared_pine 保留19个位置正确的点，但**从RF分类训练集里也剔除**(跟bare_rock一样)——原因：19点分3-4个小图斑，空间分块训练/验证一切，单独测试5类模型时cleared_pine PA=0.067(15个验证点14个错)，学不出稳定边界。改用`cleared_pine_real`真实多边形(6.698ha)作为最终地图/refugia分析的已知掩膜。**US6最终版=4类模型**(pasture/gorse_broom/exotic_pine/broadleaf_scrub)：**OA=0.684，Kappa=0.579**，脚本`scripts/06c_rf_classify_4class_final.py`，图`exploration/rf_confusion_matrix_4class_final.png`。这是历次版本里最诚实的数字(6类0.710→5类-badCP 0.742→5类-goodCP 0.583→4类-final 0.684)，之前几个更高的数字都是被位置错误的cleared_pine撑起来的假象。
+- **不受影响**：19个新点的火前波段(`pre_B2-B7`/`NDVI`/`BSI`等)全部完整，只是不用来训练分类器；dNBR/severity相关分析(US4)受影响，cleared_pine只能用n=3做定性观察，不能做统计推断。
 
 ## 方法记录 · 像元纯度检查 + cleared_pine 换成 Hansen 方法（2026-09-19）
 
