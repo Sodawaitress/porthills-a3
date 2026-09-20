@@ -5,11 +5,14 @@ S2 spectral bands+indices (15, GEE) into one final point table, joined on PID.
 Author: Claude (for Yu Zhou), 2026-09-21
 """
 import csv
+import os
 
-out_dir = r"C:\Users\zhouy3d\Desktop\a3\2024_materials"
-terrain_csv = f"{out_dir}\\TrainingPoints_2024_terrain.csv"
-s2_csv = f"{out_dir}\\TrainingPoints_2024_s2.csv"
-out_csv = f"{out_dir}\\PortHills2024_PointTable.csv"
+# relative to this script -> works on either machine after git pull, no path
+# edits needed (same trick as 15_sample_s2_features.py)
+out_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+terrain_csv = os.path.join(out_dir, "TrainingPoints_2024_terrain.csv")
+s2_csv = os.path.join(out_dir, "TrainingPoints_2024_s2.csv")
+out_csv = os.path.join(out_dir, "PortHills2024_PointTable.csv")
 
 with open(terrain_csv) as f:
     terrain_rows = {int(r["PID"]): r for r in csv.DictReader(f)}
