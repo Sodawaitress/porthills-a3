@@ -345,38 +345,15 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - 变量重要性：`BSI`>`pre_B5`>`pre_B4`>`pre_B3`，地形(`elev`/`northness`)排最后——光谱比地形更能区分这6类。
 - 脚本：`scripts/06_random_forest_classify.py`。§5(27分)材料齐了。
 
-## 方法记录 · US4 补充 RF回归对照 + CHM调研 + 道路QA + bare_rock改掩膜（2026-09-20）
+## 方法记录 · 关键决定汇总（2026-09-19 ~ 09-20）
 
-- **RF回归 vs 线性回归对照**（Yu 质疑线性回归 R²=0.44-0.5 是否够好，文献 Utah/LA 研究能到0.6-0.67）：查文献想确认 RF 需要多大样本量才能超过线性模型。⚠️ **2026-09-20 更正**：最初引用"N≈256-512 门槛"（来源标成 Infante et al. 2023, Stat in Medicine），但 Yu 自己去查这篇文章找不到这个数字，我后来试图打开 Wiley/ResearchGate/开放PDF/PubMed 四个来源逐一核实，**全部被拒绝访问，没能读到原文确认**——这个具体数字是 WebSearch 工具自动摘要生成的，不是我本人核实过的引用，已撤回，不再在report里当作有确切来源的数字使用。能相对确认（两次独立搜索摘要一致提到，但仍未读原文）的只有一条更谨慎的说法："RF 一般需要比传统回归模型多至少150%的样本量才能达到同等表现"，这个也只能当参考，不当精确引用。
-  - 实测：`RandomForestRegressor`（11个连续变量）验证集R²=0.371，加FuelClass独热编码到0.381，**都低于线性回归**(0.413/0.476)。
-  - **后续在4类子集(排除bare_rock/cleared_pine)上追加验证**（见下方"US4补充2"记录）：176点时线性R²=-0.157(比均值还差)/RF R²=0.105，256点时线性R²=0.047/RF R²=0.403——RF随样本量明显改善，线性完全没有，这个真实测出来的对比本身就是比任何文献数字更直接的证据，不需要靠外部引用的具体门槛数字来支撑"RF需要更多数据"这个结论。
-  - 脚本：`scripts/04d_rf_regression_test.py`。
-- **数据表合并**：主表(211点)和4类扩样本(80点)原来是两个CSV，每次对比要现场pandas concat，Yu提议干脆合成一张——`scripts/PortHills_PointTable_complete.csv`(291行)，带真实`OID`列(可溯源回`TrainingPoints_raw`/`TrainingPoints_4class_expansion`两个要素类)+`source`列(`original_211`/`expansion_4class_80`)。用法：筛`source=='original_211'`复现US3-US6原有结果(211点，数字不变)；筛`FuelClass not in ['bare_rock','cleared_pine']`拿到176(原始4类)+80(扩样本)=256点做回归对比。
-- **CHM(冠层高度模型=DSM-DEM)调研**：想加一个"冠层燃料结构"变量弥补跟文献的差距。
-  - 先用 `Christchurch_LiDAR_2021-2022`(2020-21年火后LiDAR)算了一版，**类均值排序不合理**(bare_rock均高6.69m反而比exotic_pine的5.37m还高，陡坡DSM-DEM水平配准误差/岩壁植被混入所致)，且**方法论上有反向因果风险**——对烧过的点，火后3-4年测到的矮植被可能是"烧毁后还没长回来"而非"火前燃料本来就矮"，会污染回归。放弃这版。
-  - 找到 `J:\Data\Digital_Elevation_Models\Christchurch_Selwyn_1mDEM\CHCDEM2015.tif` + `CHCDSM2015.tif`——**2015年火前2年**的DEM+DSM，本地实际栅格（不是索引），没有反向因果问题。类均值排序完全合理：exotic_pine 7.96m(断层最高) > broadleaf_scrub 1.58m > cleared_pine 1.27m > pasture 0.91m > gorse_broom 0.74m。
-  - **覆盖有硬伤**：211点里87个(41%)落在2015测绘范围外(南侧山脊/火场核心区超出覆盖)，且**这87个包含全部7个bare_rock点**——无法作为US4/US6主模型的必需变量（会强制丢41%数据+丢光一整类）。改为**补充描述性证据**：170点(5类，不含bare_rock)的CHM类均值表，支撑两个论点——①结构上验证了cleared_pine独立成类是对的(1.27m vs exotic_pine 7.96m，6倍差)；②冠层高度和dNBR烈度**没有正相关**（exotic_pine最高但dNBR中等318，矮小的broadleaf_scrub/gorse_broom反而dNBR最高552/479）——支持"燃料类型比生物量/植株高度更能决定烧毁结果"这个课题核心前提。数据来源写清楚：`chm_by_oid_2015.csv`。
-  - 另外查过2011年地震应急LiDAR的图幅索引，确认3次2011飞行都实际覆盖AOI，方向上比2015更早、更保险，但实际DEM/DSM栅格分发在LINZ Data Service线上，本地J盘只有索引没有实体数据，具体图层名没能直接定位——记为诚实的"数据理论上存在但未获取"局限，不再深挖。
-- **道路QA**：`J:\Data\Christchurch\Roads\Chch_Roads.shp`，AOI内7条路段，只有中心线无宽度属性，假设5m半宽缓冲(共14.7ha，未经验证，仅供参考不作为正式地图依据)。用它反查211个训练点有没有被之前"只查own polygon"的纯度检查漏掉的道路污染——**只有2个点(OID 23, 17，都是pasture)在15m以内**(5.8m/13.7m)，标记待Yu在Pro里肉眼核验，其余209个点没有道路污染风险。
-- **bare_rock 从RF分类训练集里剔除**：原因是训练点仅7个(去重后)，任何分类器都学不出稳定边界(6类版本验证集PA=0，3个验证点全错)。⚠️ **2026-09-20更正**：之前这里写过"bare_rock是US1.6手绘数字化的已知多边形，出图时可以直接叠加掩膜"——**这句是错的，已核实并撤回**。查了整个gdb（`arcpy.ListFeatureClasses()`/`ListDatasets()`遍历过，见2026-09-20 US7设计讨论），`bare_rock`从来没有过完整的多边形边界，只有7个点，不存在能拿来叠加的掩膜图层。所以剔除bare_rock解决的只是"分类训练"这一步的问题，**不解决"全栅格地图上bare_rock该画在哪"这个问题**——这部分在任何wall-to-wall分类图/refugia图上都是已知空白，除非之后手动数字化或用坡度/亮度阈值做一层新的近似（本身要另外验证，不算"补回"原来的数据）。重跑5类RF分类(去掉bare_rock)：**OA=0.742，Kappa=0.676**（6类基线OA=0.710/Kappa=0.638，全面改善，脚本`scripts/06_random_forest_classify.py`）。⚠️ **2026-09-20更正**：这次结果里 `cleared_pine`PA=UA=1.000(满分)这个数字**已作废**，因为用的还是28个位置有问题的cleared_pine点(见下一条)，待用新点重跑。`broadleaf_scrub→gorse_broom`混淆(7/20)跟6类版本几乎一样，这条不受cleared_pine影响，仍然成立。脚本：`scripts/06b_rf_classify_5class_no_bare_rock.py`，图：`exploration/rf_confusion_matrix_5class.png`（待重新出图）。
-
-## 方法记录 · cleared_pine 重新采点（2026-09-20）
-
-- **发现**：`06_cleared_pine_from_hansen.py` 算出的区块多边形(`block_fc`)从来没导出保存过，只用来画缩略图。补导出后核对，28个训练点里只有2个真的落在`exotic_pine`范围内；其余11个落在`gorse_broom`、10个在AOI范围外、3个在`broadleaf_scrub`、2个在无多边形空隙——之前"cleared_pine dNBR均值≈20(几乎不燃)"这个结论建立在这批位置错误的点上，不可信。
-- **重新定义**：Hansen `lossyear==16`(参数不变) **∩ `exotic_pine`多边形**，真实面积仅6.7ha(4块)，15m纯度收缩后1.43ha，实际能撒 **19个点**(30m最小间距)。已替换`TrainingPoints_raw`里的旧28个点，`PortHills_PointTable.csv`已用新点重建(**211→202点**)。
-- **新问题**：19个新点里16个落在同一片被火后影像云/阴影覆盖的区域，`post_B4`/`dNBR`为空值，只有3个点有完整火前+火后数据。这3个点dNBR = 257、730、242——**中度到重度都有，不是"几乎不燃"**，方向上支持"slash燃料易燃"而非"低燃料"的假设(Yu指出的)，但n=3太小不能下统计结论。
-- **补数据尝试(2026-09-20)——已放弃**：`10_check_postfire_alt_dates.py`找到2017-04-22影像19/19点全干净，`11_fill_cleared_pine_postfire.py`用这天重采样。核对时发现：①对方脚本算的dNBR少乘了1000、少减了偏移量(真实公式是`dNBR=(NBR_pre-NBR_post)×1000-120.4596`，用现有186个有效点回归验证，R²=0.9999999999999944)；②就算修正公式，拿4月22日(火后2个多月，植被已恢复)跟原始火后影像算出来的dNBR对比，3个能对照的点差了22%~78%，方向还不一致——**换日期会引入真实的系统性偏差，不是能忽略的噪声**。已决定放弃，不合并这份数据。
-- **最终决定**：cleared_pine 保留19个位置正确的点，但**从RF分类训练集里也剔除**(跟bare_rock一样)——原因：19点分3-4个小图斑，空间分块训练/验证一切，单独测试5类模型时cleared_pine PA=0.067(15个验证点14个错)，学不出稳定边界。改用`cleared_pine_real`真实多边形(6.698ha)作为最终地图/refugia分析的已知掩膜。**US6最终版=4类模型**(pasture/gorse_broom/exotic_pine/broadleaf_scrub)：**OA=0.684，Kappa=0.579**，脚本`scripts/06c_rf_classify_4class_final.py`，图`exploration/rf_confusion_matrix_4class_final.png`。这是历次版本里最诚实的数字(6类0.710→5类-badCP 0.742→5类-goodCP 0.583→4类-final 0.684)，之前几个更高的数字都是被位置错误的cleared_pine撑起来的假象。
-- **不受影响**：19个新点的火前波段(`pre_B2-B7`/`NDVI`/`BSI`等)全部完整，只是不用来训练分类器；dNBR/severity相关分析(US4)受影响，cleared_pine只能用n=3做定性观察，不能做统计推断。
-
-## 方法记录 · 像元纯度检查 + cleared_pine 换成 Hansen 方法（2026-09-19）
-
-- **像元纯度检查**（Yu 的主意）：她自己在 ArcGIS Pro 里加 buffer 核对训练点时，意识到"buffer 大小该跟 Landsat 像元对齐，用来判断这个点会不会采到混合像元"——比"buffer 用来取平均"这个思路本身更对。做法：以每个点为中心画 15m 半径的圆（对应 30m 像元宽度），检查这个圆有没有越出它自己所在的 LCDB 多边形。178 个 LCDB 来源的点里查出 28 个(15.7%)不纯，直接删除，在各自类别的多边形**向内缩 15m 后的"安全内部"**里重新撒等量的点补上——这样补的点天生保证纯，不用再筛一遍。
-- **cleared_pine 从"亮度+绿度"粗筛换成 Hansen Global Forest Change**：另一台机器（Yu 跑的）用 `UMD/hansen/global_forest_change_2023_v1_11` 的 `lossyear==16` 图层（**权威、可引用的全球森林变化监测数据集**，专门标记 2016 年发生的森林损失——正好卡在 LCDB 2012 标签和 2017 火之间），只保留连通像元数≥6(约0.5ha)的成块区域（滤掉零散噪点，因为真实采伐是几何形状），分层抽样撒点。
-  - 第一批 N=40 只有 16 个通过云检查（这批点凑巧撞上不少火前影像的云/阴影，查过确认不是范围算错——40个全部在AOI里，是真云）；加大到 N=80，通过 37 个，跟其他类同一量级。
-  - 脚本：`scripts/06_cleared_pine_from_hansen.py`（GEE），验证图：`harvest_check/cleared_pine_blocks.png`。
-- **cleared_pine 点位太扎堆**（另一台机器上发现的问题）：80 个候选过滤出 37 个后，查了一下空间分布——37 个点只占了少数几个采伐区，其中一个区块塞了 7 个点，最近两点只隔 22m（比 Landsat 一个像元还窄，等于重复采样）。分两步修：①强制 30m 最小间距（跟其他类同一标准），37→34；②每个采伐区(300m格子)最多留 3 个点，逼着分布到更多不同的采伐区，34→28。改完最近距离 43m、中位数间距 106m，16 个不同区块里最多的也就 3 个点。
-- **最终点表（2026-09-19 收尾）**：215 点，见下 US3 又发现 bare_rock 重复行，去重后 **212 点**。pasture 44、gorse_broom 45、exotic_pine 42、broadleaf_scrub 46、bare_rock **7**、cleared_pine 28。0 个云污染点，4 个 LCDB 类全部通过像元纯度检查，cleared_pine 空间分布已修匀。
+- **像元纯度检查**：以训练点为中心画15m半径(对应30m Landsat像元)，检查有没有越出自己所在的LCDB多边形；不纯的删除，在多边形向内缩15m的"安全内部"里补点，天生保证纯。
+- **cleared_pine 最终定义**：Hansen `lossyear==16` ∩ `exotic_pine`多边形，真实面积6.7ha(4块)，15m纯度收缩后1.43ha，撒出**19个点**(30m最小间距)。19点火前波段完整；dNBR/火后波段仅3点有效(其余16点撞上火后影像云污染，2017-04-22替代日期试过，因两个月的火后植被恢复导致22-78%系统性偏差，已放弃不用)。
+- **RF回归 vs 线性回归**（US4，测试RF能否超过线性回归R²=0.41-0.48）：`RandomForestRegressor`验证集R²=0.371-0.381，均低于线性。4类子集(排除bare_rock/cleared_pine)176点vs256点对比：线性R²始终很差(-0.157→0.047)，RF随样本量明显改善(0.105→0.403)——证明RF需要更多数据才能发挥优势，但只在关系本身够复杂时才有意义。脚本`scripts/04d_rf_regression_test.py`。
+- **CHM(冠层高度模型)**：测过火前2015年LiDAR，类均值排序合理但覆盖只有59%(丢光全部bare_rock)，且对gorse_broom/broadleaf_scrub分离度贡献很小(控制样本后仅+0.05)——未采用。
+- **道路QA**：`J:\Data\Christchurch\Roads\Chch_Roads.shp`反查训练点，5m假设半宽缓冲下仅2个点(OID 23,17，pasture)在15m以内，其余无风险。
+- **数据表合并**：`scripts/PortHills_PointTable_complete.csv`(282行=202主点+80扩样本干净点)，带`OID`+`source`列，专供US4样本量对比用，不用于分类。
+- **bare_rock + cleared_pine 最终都从RF分类训练集剔除**：前者7点无完整边界(核实过，gdb里从未有过bare_rock多边形，是诚实的地图空白)；后者19点分3-4个小图斑，空间分块下学不出边界(PA=0.067)，但有`cleared_pine_real`真实多边形(6.698ha)可作已知掩膜。**US6最终版=4类模型：OA=0.684，Kappa=0.579**，脚本`scripts/06c_rf_classify_4class_final.py`。历次版本(6类0.710→5类-badCP 0.742→5类-goodCP 0.583→4类-final 0.684)里这个最诚实，之前更高的分数都是位置错误的cleared_pine撑出来的假象。
 
 ## 方法记录 · US3 First Pass（2026-09-19）
 
