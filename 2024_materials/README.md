@@ -156,8 +156,21 @@ terrain那份按 `FID` 合并成最终点表。
 + NDVI/NBR/NDWI/NDRE/BSI），5类全部 35train/15valid——US1+US2 等效流程完成，
 跟2017的 `PortHills_PointTable.csv` 是同一个角色。
 
+## 11. §3 First Pass（`17_s3_exploration_pass1.py`，踩坑已修 `18_fix_edge_slope_northness.py`）
+**空值/常数列/重复行**：全部干净(0个)。
+**⚠️ 踩过的坑（已修）**：箱线图里 `slope`/`northness` 两列被一个 **-9999** 离群值拉爆
+y轴，249个点全挤成一条线看不出来——查出是2个点(FID 105/118，都是exotic_pine)的真实
+问题：**坡度/坡向需要3×3邻域算梯度，这两个点离AOI边界太近，靠外侧的邻居像元在DEM
+裁剪时被切掉了**，导致slope/aspect算不出来（但elev/chm不需要邻域，同样两个点这两列
+是正常的，说明问题precisely在"需不需要邻域"这条线上）。**修法**：DEM先按AOI**外扩
+100m**裁剪、在这个更大的范围上算slope/aspect/northness，再只在这两个点上重新取值——
+不用像2017那样直接删点，250点一个没少。
+**IQR离群值**：chm最多(31个，跟已知的强右偏分布一致)，光谱波段普遍个位数到十位数，
+地形三兄弟(elev/slope/northness)修完之后都是0。
+图：`exploration/boxplots_by_class_2024.png`。
+
 ## 还没做的（跟2017对齐的下一批：§3-§5）
-- §3 数据探索（离群值 IQR → 正态性 skew/kurt → 变换测试）
+- §3 Second Pass（正态性 skew/kurt → 变换测试）
 - §4 关系（相关表/VIF清理 → dNBR回归）—— 2024这次dNBR/火后波段还没采样，
   需要先决定Y变量怎么来（跟2017一样用dNBR连续值，还是这次有别的想法）
 - §5 分类（JM可分性 → RF → 混淆矩阵）——这次cleared_pine更连片(7块非2017的
