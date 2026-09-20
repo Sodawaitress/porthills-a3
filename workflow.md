@@ -433,6 +433,25 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 
 ---
 
+## 设计 · US9 正式地图（2026-09-20，待Yu确认，未执行）
+
+**目标**：report.md R7(4分)要求的2张正式地图，各带6要素(title/legend/scale/north/inset/source+EPSG:2193)。
+
+**图1 · 燃料分类图**
+- 底图：`FuelClass_4class_map_clipped`(4类：pasture/gorse_broom/exotic_pine/broadleaf_scrub)
+- 叠加：`cleared_pine_real`(6.698ha真实边界)单独配色/花纹
+- `bare_rock`：图上不强行画(没有真实边界)，图例里注明"未建模，样本仅7点、范围极小"
+- 6要素：标题"Port Hills Pre-Fire Fuel Classification (2017)"；图例(4类+cleared_pine共5项)；比例尺；指北针；小尺寸NZ/Canterbury定位图(标出Port Hills位置)；来源+坐标系文字("Landsat 8 USGS EarthExplorer, LCDB v5, NZTM EPSG:2193")
+
+**图2 · Refugia图**
+- 底图：severity/refugia栅格(severity==0高亮=refugia，其余=过火)，同一裁剪边界
+- 叠加：燃料类型作为花纹/半透明叠加，方便看出refugia跟植被类型的关系
+- 同样6要素，标题"Unburned Refugia vs Vegetation Type (2017 Fire)"
+
+**做法**：用 `arcpy.mp` 在 `PortHills2017.aprx` 里新建Layout，加MapFrame+Legend+ScaleBar+NorthArrow+文字元素，脚本生成保证两张图排版一致、可重复执行。导出PNG/PDF。
+
+---
+
 ## 状态总览
 
 - [ ] **⭐ 建核心点表**（栈在训/验点上采样 → 类别+波段+指数+地形一张表）= §3–§5 地基
