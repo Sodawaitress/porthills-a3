@@ -7,7 +7,7 @@
 ## 🔵 现在做：US7/US9 — refugia 支线 + 地图
 
 - ✅ US1-US6 全部完成！§3(20)+§4(25)+§5(27)=72分主体材料全部出图出数，report.md 对应段落都写好了。
-- US6 结果（改进版）：`bare_rock` 边界本来就是手绘数字化的，改成出图时叠掩膜、不进分类训练集，分类器只学5类 → **OA=0.742, Kappa=0.676**（比6类版本 OA=0.710/Kappa=0.638 全面提高）。`native_scrub`→`gorse_broom` 错7/20 的老问题还在，证实是这两类本身光谱重叠，不是bare_rock拖累的假象。
+- US6 结果（改进版）：`bare_rock` 边界本来就是手绘数字化的，改成出图时叠掩膜、不进分类训练集，分类器只学5类 → **OA=0.742, Kappa=0.676**（比6类版本 OA=0.710/Kappa=0.638 全面提高）。`broadleaf_scrub`→`gorse_broom` 错7/20 的老问题还在，证实是这两类本身光谱重叠，不是bare_rock拖累的假象。
 - US4 补充：测过 RF 回归代替线性回归，全6类时结果更差（验证集R²=0.371 vs 线性0.413/0.476）；⚠️ 之前引用的"256-512样本量门槛"数字查不到出处已撤回（Yu核实+我试了4个来源都打不开原文），改成自己测：只用4个大类(排除bare_rock/cleared_pine)对比176点vs256点，线性R²始终很差(-0.157→0.047)，**RF明显随样本量改善(0.105→0.403)**，这个自测证据比外部引用更直接。另查了2015年火前LiDAR算冠层高度(CHM)，覆盖有缺口不能进正式模型，降级为170点的补充描述性证据(exotic_pine冠层最高但dNBR不是最高，支持"燃料类型比生物量更决定烧毁结果")。
 
 **下一步**（还剩的）：
@@ -65,7 +65,7 @@
 | Gorse and/or Broom、Manuka and/or Kanuka | gorse_broom |
 | Exotic Forest | exotic_pine |
 | High/Low Producing Grassland、Orchard/Vineyard、Short-rotation Cropland | pasture |
-| Broadleaved Indigenous Hardwoods、Indigenous Forest | native_scrub |
+| Broadleaved Indigenous Hardwoods、Indigenous Forest | broadleaf_scrub |
 | Built-up Area | 排除（AOI 内只 0.05ha，可忽略） |
 | （bare-rock） | LCDB 没有对应类，US1.6 补 |
 | Exotic Forest 内的非郁闭区（亮度高+绿度低，去噪后 ~25ha，占 exotic_pine 6.6%） | **cleared_pine**（新第 6 类，US1.6 加） |

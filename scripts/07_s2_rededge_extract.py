@@ -1,6 +1,6 @@
 """
 US5 补充方案2 - 给211个训练点提取 Sentinel-2 红边波段(B5/B6/B7)，
-测试能不能把 native_scrub vs gorse_broom 这对JM=1.46的老大难分开。
+测试能不能把 broadleaf_scrub vs gorse_broom 这对JM=1.46的老大难分开。
 Landsat 8 没有红边波段，S2才有，所以这是L8体系里补不出来的信息。
 
 跑法：在已经装好+认证过 earthengine-api 的那台机器上跑：
@@ -64,6 +64,6 @@ print("匹配到红边值的点数:", len(out_df), "/", len(pts_df))
 
 # 红边归一化植被指数 (NDVI_rededge = (B8-B5)/(B8+B5))，跟普通NDVI对比看有没有额外区分力
 out_df['NDVI_re'] = (out_df['B8'] - out_df['B5']) / (out_df['B8'] + out_df['B5'])
-print("\n=== gorse_broom vs native_scrub 红边波段均值对比 ===")
-sub = out_df[out_df['FuelClass'].isin(['gorse_broom', 'native_scrub'])]
+print("\n=== gorse_broom vs broadleaf_scrub 红边波段均值对比 ===")
+sub = out_df[out_df['FuelClass'].isin(['gorse_broom', 'broadleaf_scrub'])]
 print(sub.groupby('FuelClass')[['B5', 'B6', 'B7', 'NDVI_re']].agg(['mean', 'std', 'count']))

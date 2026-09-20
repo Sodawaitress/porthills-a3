@@ -1,6 +1,6 @@
 """
 US5 补充方案1 - 给211个训练点提取"金雀花花期(春季)"的光谱值，
-测试能不能把 native_scrub vs gorse_broom 分开。
+测试能不能把 broadleaf_scrub vs gorse_broom 分开。
 文献依据: gorse开花期(NZ的8-10月)大片鲜黄色，用春季影像能把它从其他灌丛类型
 里分出来 (Satellite mapping of gorse at regional scales,
 https://www.researchgate.net/publication/230694091)。
@@ -77,7 +77,7 @@ out_df.to_csv(OUT_CSV, index=False)
 print("wrote ->", OUT_CSV)
 print("匹配到春季波段值的点数:", len(out_df), "/", len(pts_df))
 
-print("\n=== gorse_broom vs native_scrub 花期波段/黄度指数对比 ===")
-sub = out_df[out_df["FuelClass"].isin(["gorse_broom", "native_scrub"])]
+print("\n=== gorse_broom vs broadleaf_scrub 花期波段/黄度指数对比 ===")
+sub = out_df[out_df["FuelClass"].isin(["gorse_broom", "broadleaf_scrub"])]
 print(sub.groupby("FuelClass")[["SR_B2", "SR_B3", "SR_B4", "yellow_index", "NDVI_spring"]]
       .agg(["mean", "std", "count"]))

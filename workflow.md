@@ -272,11 +272,11 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 
 ## 方法记录 · US1.4/1.5 LCDB reclass + 分层撒点（2026-09-18）
 
-- **US1.4 对照表**：`lcdbPorthills` 加字段 `FuelClass`(文本)，Calculate Field 按 `Name_2012` 查表填值，Manuka/Kanuka 按易燃性归 `gorse_broom`（不按 native/exotic，见 product.md US1.4 完整对照表）。跑完分布：exotic_pine 50 个多边形、gorse_broom 37、pasture 17、native_scrub 16、Built-up 1(空值，排除，面积仅 0.05ha)。
+- **US1.4 对照表**：`lcdbPorthills` 加字段 `FuelClass`(文本)，Calculate Field 按 `Name_2012` 查表填值，Manuka/Kanuka 按易燃性归 `gorse_broom`（不按 native/exotic，见 product.md US1.4 完整对照表）。跑完分布：exotic_pine 50 个多边形、gorse_broom 37、pasture 17、broadleaf_scrub 16、Built-up 1(空值，排除，面积仅 0.05ha)。
 - **US1.5 撒点**：`arcpy.management.CreateRandomPoints`，每类目标 50 点，最小间距 30m(避免同一 Landsat 像元里挤好几个点)。
   - ⚠️ **踩过的坑**：约束范围传入一个类的多个多边形时，这个工具是**每个多边形都撒够 N 个**，不是这一类总共 N 个——第一次跑出来 3604 点（该是 200）。**修法**：先 `Dissolve` 把同一类的多边形合并成一个整体，再撒点，N 才是这一类的总数。
   - 结果：4 类 × 50 = 200 点，存 `PortHills2017.gdb\TrainingPoints_raw`，字段 `FuelClass`/`class_id`(1-4，喂 GEE)/`split`。
-- **训/验切分**：**没有**逐点随机 70/30——查资料发现这样切空间自相关会让验证精度虚高（[Spatial dependence between training and test sets 论文](https://link.springer.com/article/10.1007/s10994-021-05972-1)）。改成**按 300m 格子整块分配**（同一格子的点必须分到同一边），70/30 比例因此不精确（如 native_scrub 实际 58/42），这是有意的取舍。参考：[Choosing blocks for spatial cross-validation](https://www.researchgate.net/publication/390049401_Choosing_blocks_for_spatial_cross-validation_Lessons_from_a_marine_remote_sensing_case_study)、[Olofsson et al. 2014 分层抽样](https://research.wur.nl/en/publications/good-practices-for-estimating-area-and-assessing-accuracy-of-land/)。
+- **训/验切分**：**没有**逐点随机 70/30——查资料发现这样切空间自相关会让验证精度虚高（[Spatial dependence between training and test sets 论文](https://link.springer.com/article/10.1007/s10994-021-05972-1)）。改成**按 300m 格子整块分配**（同一格子的点必须分到同一边），70/30 比例因此不精确（如 broadleaf_scrub 实际 58/42），这是有意的取舍。参考：[Choosing blocks for spatial cross-validation](https://www.researchgate.net/publication/390049401_Choosing_blocks_for_spatial_cross-validation_Lessons_from_a_marine_remote_sensing_case_study)、[Olofsson et al. 2014 分层抽样](https://research.wur.nl/en/publications/good-practices-for-estimating-area-and-assessing-accuracy-of-land/)。
 - 脚本临时写在本机 `%TEMP%`，没进仓库（纯一次性数据操作，不是可复用管线）；逻辑摘要就是这段记录。
 
 ## 方法记录 · US1.6 bare-rock 补点（2026-09-19）
@@ -291,7 +291,7 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 
 - **坡向核查**：老师课上提过训练点要覆盖不同坡度/坡向（向阳背阳都要有）。查了 225 个点在 `Aspect1m.tif` 上的分布：`gorse_broom` 向阳明显多于背阳(11:4)——判断是真实生态规律（金雀花偏爱干燥向阳坡），不是取样偏差，写进报告当发现，不用改；`exotic_pine` 背阳只有 2 个、`bare_rock` 向阳/平地是 0——判断是取样没兜住，补点：exotic_pine 背阳坡补了 10 个；bare_rock 认真搜过向阳候选（坡度>60°里唯一像样的候选放大一看是伐木迹地边界，排除），**没找到向阳裸岩，判断是这片区域裸岩本来就集中在背阳/东向海岸悬崖**，写进报告当局限。
 - **exotic_pine 标签修正**：亮度+绿度自动筛（活树冠深绿低亮度 vs 砍伐迹地浅棕高亮度）+ 目视核对，60 个 exotic_pine 点里筛出 4 个可疑，确认 3 个真的落在采伐迹地/集材场上（不是活树），删除；1 个是年轻松树苗（种植行清晰可见，不是砍伐迹地），保留。**原因**：LCDB `Class_2012` 标签是 2012 年的，松树有采伐周期，2012–2017 间被砍过的地块标签会过期失效——这是 **contextual outlier**（标签当年没错，时间点对不上导致现在失效），已写进 report.md R3 离群值那段。
-- **最终点数（2026-09-19 收尾）**：222 点。`pasture` 35/15、`gorse_broom` 35/15、`exotic_pine` 38/19、`native_scrub` 29/21、`bare_rock` 10/5（train/valid）。
+- **最终点数（2026-09-19 收尾）**：222 点。`pasture` 35/15、`gorse_broom` 35/15、`exotic_pine` 38/19、`broadleaf_scrub` 29/21、`bare_rock` 10/5（train/valid）。
 
 ## 方法记录 · US1.4 新增第 6 类 cleared_pine（2026-09-19）
 
@@ -306,7 +306,7 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 
 - 直接在本地用 `arcpy.sa.Sample()` 在 `PortHills2017_stack.tif`(22 波段) 上采样 252 个训练点，不走 GEE（点和栈都已经在本地同一个工程里，没必要绕云端）。
 - ⚠️ **踩过的坑**：`Sample()` 输出表里有两个像 ID 的字段——`OBJECTID`(表自己新编的连续 1-N，没有意义)和以输入图层命名的字段（这里叫 `TrainingPoints_raw`，才是**真实的原始点 OID**）。第一版脚本用错了 `OBJECTID` 去拼标签，因为之前删过 3 个点留下缺口，导致从那之后**一半多的行波段值和标签全部对错位**——查"输出行数比点数少"这个异常线索才发现。**教训：Sample/ExtractValues 类工具的 ID 字段，认准以输入图层命名的那个，不是工具自己生成的 OBJECTID。**
-- **QA 清洗**：查 `valid_data` 波段（标记云/云影像元），252 点里 41 个落在无效像元上（直接按坐标查栅格值查的，比只看 CSV 里 valid_data==0 更彻底，多抓到 2 个 NoData 的），删除。**最终 211 点**：pasture 45、gorse_broom 44、exotic_pine 43、native_scrub 46、bare_rock 10、cleared_pine 23。
+- **QA 清洗**：查 `valid_data` 波段（标记云/云影像元），252 点里 41 个落在无效像元上（直接按坐标查栅格值查的，比只看 CSV 里 valid_data==0 更彻底，多抓到 2 个 NoData 的），删除。**最终 211 点**：pasture 45、gorse_broom 44、exotic_pine 43、broadleaf_scrub 46、bare_rock 10、cleared_pine 23。
 - **产出**：`scripts/PortHills_PointTable.csv`（211 行 × 22 波段值 + FuelClass/class_id/split）——§3-§5 统计分析的地基，US2 完成。
 
 ## 方法记录 · US4 dNBR 回归 + VIF 清理（2026-09-19）
@@ -319,14 +319,14 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 ## 方法记录 · US5 可分性 JM 指数（2026-09-19）
 
 - 特征空间：6波段+NDVI+BSI（跟最早 kmeans 诊断用的一致），JM公式引 Richards(2013)。
-- 结果：`bare_rock` 跟其余5类JM全部=2.00(完全分开)；`gorse_broom` vs `native_scrub` JM=1.46，全部15对里最低，明显是弱项——跟product.md US1.1最早k-means诊断时的担忧("c1/c3 native vs pine分不分得开"，这里实际验证出问题的是native vs gorse不是native vs pine)对上了。光谱曲线图上这两类在B5/B6/B7几乎重合。脚本：`scripts/05_separability_jm.py`。
-- 对US6的提示：混淆矩阵里如果gorse_broom/native_scrub互相误判多，不是模型没调好，是这两类本身光谱就像，属于已知局限。
+- 结果：`bare_rock` 跟其余5类JM全部=2.00(完全分开)；`gorse_broom` vs `broadleaf_scrub` JM=1.46，全部15对里最低，明显是弱项——跟product.md US1.1最早k-means诊断时的担忧("c1/c3 native vs pine分不分得开"，这里实际验证出问题的是native vs gorse不是native vs pine)对上了。光谱曲线图上这两类在B5/B6/B7几乎重合。脚本：`scripts/05_separability_jm.py`。
+- 对US6的提示：混淆矩阵里如果gorse_broom/broadleaf_scrub互相误判多，不是模型没调好，是这两类本身光谱就像，属于已知局限。
 
 ## 方法记录 · US6 Random Forest 分类（2026-09-19）
 
 - 装了 `scikit-learn`(ArcGIS Pro 自带env原本没有，pip装的，1.9.1)。像元法(不是对象法)，特征=6波段+NDVI+BSI+elev+slope+northness(11个，RF不怕多重共线性，跟US4的VIF清理是两回事，不用共用那6个)。训练/验证严格用之前定好的空间分块split字段，不重新分。
 - `RandomForestClassifier(n_estimators=500)`，OOB accuracy=0.627，验证集 **OA=0.710，Kappa=0.638**。
-- 混淆矩阵印证 US5：`native_scrub`→`gorse_broom` 错7/20（真实native_scrub里近1/3被错分成gorse），`gorse_broom`本身UA只有0.421(预测为gorse_broom的19个里只8个真的是)——说明模型有点"过度预测gorse_broom"，native_scrub和pasture都往这边漏。`bare_rock` PA=0(3个验证点全错，样本太少的必然结果，4个训练点教不出东西)。`cleared_pine` PA=UA=1.00，分类效果最好。
+- 混淆矩阵印证 US5：`broadleaf_scrub`→`gorse_broom` 错7/20（真实broadleaf_scrub里近1/3被错分成gorse），`gorse_broom`本身UA只有0.421(预测为gorse_broom的19个里只8个真的是)——说明模型有点"过度预测gorse_broom"，broadleaf_scrub和pasture都往这边漏。`bare_rock` PA=0(3个验证点全错，样本太少的必然结果，4个训练点教不出东西)。`cleared_pine` PA=UA=1.00，分类效果最好。
 - 变量重要性：`BSI`>`pre_B5`>`pre_B4`>`pre_B3`，地形(`elev`/`northness`)排最后——光谱比地形更能区分这6类。
 - 脚本：`scripts/06_random_forest_classify.py`。§5(27分)材料齐了。
 
@@ -339,11 +339,11 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - **数据表合并**：主表(211点)和4类扩样本(80点)原来是两个CSV，每次对比要现场pandas concat，Yu提议干脆合成一张——`scripts/PortHills_PointTable_complete.csv`(291行)，带真实`OID`列(可溯源回`TrainingPoints_raw`/`TrainingPoints_4class_expansion`两个要素类)+`source`列(`original_211`/`expansion_4class_80`)。用法：筛`source=='original_211'`复现US3-US6原有结果(211点，数字不变)；筛`FuelClass not in ['bare_rock','cleared_pine']`拿到176(原始4类)+80(扩样本)=256点做回归对比。
 - **CHM(冠层高度模型=DSM-DEM)调研**：想加一个"冠层燃料结构"变量弥补跟文献的差距。
   - 先用 `Christchurch_LiDAR_2021-2022`(2020-21年火后LiDAR)算了一版，**类均值排序不合理**(bare_rock均高6.69m反而比exotic_pine的5.37m还高，陡坡DSM-DEM水平配准误差/岩壁植被混入所致)，且**方法论上有反向因果风险**——对烧过的点，火后3-4年测到的矮植被可能是"烧毁后还没长回来"而非"火前燃料本来就矮"，会污染回归。放弃这版。
-  - 找到 `J:\Data\Digital_Elevation_Models\Christchurch_Selwyn_1mDEM\CHCDEM2015.tif` + `CHCDSM2015.tif`——**2015年火前2年**的DEM+DSM，本地实际栅格（不是索引），没有反向因果问题。类均值排序完全合理：exotic_pine 7.96m(断层最高) > native_scrub 1.58m > cleared_pine 1.27m > pasture 0.91m > gorse_broom 0.74m。
-  - **覆盖有硬伤**：211点里87个(41%)落在2015测绘范围外(南侧山脊/火场核心区超出覆盖)，且**这87个包含全部7个bare_rock点**——无法作为US4/US6主模型的必需变量（会强制丢41%数据+丢光一整类）。改为**补充描述性证据**：170点(5类，不含bare_rock)的CHM类均值表，支撑两个论点——①结构上验证了cleared_pine独立成类是对的(1.27m vs exotic_pine 7.96m，6倍差)；②冠层高度和dNBR烈度**没有正相关**（exotic_pine最高但dNBR中等318，矮小的native_scrub/gorse_broom反而dNBR最高552/479）——支持"燃料类型比生物量/植株高度更能决定烧毁结果"这个课题核心前提。数据来源写清楚：`chm_by_oid_2015.csv`。
+  - 找到 `J:\Data\Digital_Elevation_Models\Christchurch_Selwyn_1mDEM\CHCDEM2015.tif` + `CHCDSM2015.tif`——**2015年火前2年**的DEM+DSM，本地实际栅格（不是索引），没有反向因果问题。类均值排序完全合理：exotic_pine 7.96m(断层最高) > broadleaf_scrub 1.58m > cleared_pine 1.27m > pasture 0.91m > gorse_broom 0.74m。
+  - **覆盖有硬伤**：211点里87个(41%)落在2015测绘范围外(南侧山脊/火场核心区超出覆盖)，且**这87个包含全部7个bare_rock点**——无法作为US4/US6主模型的必需变量（会强制丢41%数据+丢光一整类）。改为**补充描述性证据**：170点(5类，不含bare_rock)的CHM类均值表，支撑两个论点——①结构上验证了cleared_pine独立成类是对的(1.27m vs exotic_pine 7.96m，6倍差)；②冠层高度和dNBR烈度**没有正相关**（exotic_pine最高但dNBR中等318，矮小的broadleaf_scrub/gorse_broom反而dNBR最高552/479）——支持"燃料类型比生物量/植株高度更能决定烧毁结果"这个课题核心前提。数据来源写清楚：`chm_by_oid_2015.csv`。
   - 另外查过2011年地震应急LiDAR的图幅索引，确认3次2011飞行都实际覆盖AOI，方向上比2015更早、更保险，但实际DEM/DSM栅格分发在LINZ Data Service线上，本地J盘只有索引没有实体数据，具体图层名没能直接定位——记为诚实的"数据理论上存在但未获取"局限，不再深挖。
 - **道路QA**：`J:\Data\Christchurch\Roads\Chch_Roads.shp`，AOI内7条路段，只有中心线无宽度属性，假设5m半宽缓冲(共14.7ha，未经验证，仅供参考不作为正式地图依据)。用它反查211个训练点有没有被之前"只查own polygon"的纯度检查漏掉的道路污染——**只有2个点(OID 23, 17，都是pasture)在15m以内**(5.8m/13.7m)，标记待Yu在Pro里肉眼核验，其余209个点没有道路污染风险。
-- **bare_rock 从"分类目标"改成"已知边界掩膜"**：bare_rock是US1.6手绘数字化的已知多边形，不需要靠光谱统计去猜边界在哪，改为最终出图时直接叠加掩膜，不进RF分类训练集。重跑5类RF分类(去掉bare_rock)：**OA=0.742，Kappa=0.676**（6类基线OA=0.710/Kappa=0.638，全面改善）；`cleared_pine`这次PA=UA=1.000(满分)；`native_scrub→gorse_broom`混淆(7/20)跟6类版本几乎一样，证实这是这两类本身特征空间重叠的真实局限，不是bare_rock拖累的假象。脚本：`scripts/06b_rf_classify_5class_no_bare_rock.py`，图：`exploration/rf_confusion_matrix_5class.png`。US9出图时bare_rock/道路都用掩膜叠加，不靠分类器推断。
+- **bare_rock 从"分类目标"改成"已知边界掩膜"**：bare_rock是US1.6手绘数字化的已知多边形，不需要靠光谱统计去猜边界在哪，改为最终出图时直接叠加掩膜，不进RF分类训练集。重跑5类RF分类(去掉bare_rock)：**OA=0.742，Kappa=0.676**（6类基线OA=0.710/Kappa=0.638，全面改善）；`cleared_pine`这次PA=UA=1.000(满分)；`broadleaf_scrub→gorse_broom`混淆(7/20)跟6类版本几乎一样，证实这是这两类本身特征空间重叠的真实局限，不是bare_rock拖累的假象。脚本：`scripts/06b_rf_classify_5class_no_bare_rock.py`，图：`exploration/rf_confusion_matrix_5class.png`。US9出图时bare_rock/道路都用掩膜叠加，不靠分类器推断。
 
 ## 方法记录 · 像元纯度检查 + cleared_pine 换成 Hansen 方法（2026-09-19）
 
@@ -352,7 +352,7 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
   - 第一批 N=40 只有 16 个通过云检查（这批点凑巧撞上不少火前影像的云/阴影，查过确认不是范围算错——40个全部在AOI里，是真云）；加大到 N=80，通过 37 个，跟其他类同一量级。
   - 脚本：`scripts/06_cleared_pine_from_hansen.py`（GEE），验证图：`harvest_check/cleared_pine_blocks.png`。
 - **cleared_pine 点位太扎堆**（另一台机器上发现的问题）：80 个候选过滤出 37 个后，查了一下空间分布——37 个点只占了少数几个采伐区，其中一个区块塞了 7 个点，最近两点只隔 22m（比 Landsat 一个像元还窄，等于重复采样）。分两步修：①强制 30m 最小间距（跟其他类同一标准），37→34；②每个采伐区(300m格子)最多留 3 个点，逼着分布到更多不同的采伐区，34→28。改完最近距离 43m、中位数间距 106m，16 个不同区块里最多的也就 3 个点。
-- **最终点表（2026-09-19 收尾）**：215 点，见下 US3 又发现 bare_rock 重复行，去重后 **212 点**。pasture 44、gorse_broom 45、exotic_pine 42、native_scrub 46、bare_rock **7**、cleared_pine 28。0 个云污染点，4 个 LCDB 类全部通过像元纯度检查，cleared_pine 空间分布已修匀。
+- **最终点表（2026-09-19 收尾）**：215 点，见下 US3 又发现 bare_rock 重复行，去重后 **212 点**。pasture 44、gorse_broom 45、exotic_pine 42、broadleaf_scrub 46、bare_rock **7**、cleared_pine 28。0 个云污染点，4 个 LCDB 类全部通过像元纯度检查，cleared_pine 空间分布已修匀。
 
 ## 方法记录 · US3 First Pass（2026-09-19）
 
@@ -360,15 +360,15 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - **空值**：0，干净。
 - **常数列**：`valid_data` 全部是 1（因为前面已经把无效点删完了），无预测力，该删。
 - **重复行**：查出 5 行重复，全部来自 `bare_rock`——那几个岩石点位只有 35-40m 见方，30m 最小间距不足以保证每个点落在不同的 30m Landsat 像元里，导致同一像元被当成好几个"独立"点。去重后 bare_rock 从 10 个降到 **7 个真正独立的点**——这是这一类的真实局限（本来就稀少+空间挤），报告要说清楚。
-- **离群值判断（IQR fences）**：`slope`(bare_rock) 37-39° 判定**真信号保留**——这正是筛出裸岩用的定义特征，不是误差；`pre_B7/pre_B6`(cleared_pine) SWIR偏高判定**真信号**——干燥裸地反射率高，符合定义；`pre_B5`(native_scrub) NIR偏高判定**大概率真信号**——茂密本土灌丛反射率本来就高；`pre_B2`(exotic_pine 单点) 蓝波段偏高**存疑**——蓝波段对残留薄云/霾最敏感，不确定是不是没被 QA_PIXEL 抓到的污染。
+- **离群值判断（IQR fences）**：`slope`(bare_rock) 37-39° 判定**真信号保留**——这正是筛出裸岩用的定义特征，不是误差；`pre_B7/pre_B6`(cleared_pine) SWIR偏高判定**真信号**——干燥裸地反射率高，符合定义；`pre_B5`(broadleaf_scrub) NIR偏高判定**大概率真信号**——茂密本土灌丛反射率本来就高；`pre_B2`(exotic_pine 单点) 蓝波段偏高**存疑**——蓝波段对残留薄云/霾最敏感，不确定是不是没被 QA_PIXEL 抓到的污染。
 - 箱线图(`exploration/boxplots_by_class.png`)顺带看出好几个变量类别间天然分得开（NDVI/BSI 上 cleared_pine 明显偏离、elev/slope 上 bare_rock 明显偏离）——对§5可分性是好兆头，这张图能直接用。
 
 ## 方法记录 · US3 Second Pass 正态性（2026-09-19）
 
 - **混着算 vs 分类别算，结果完全相反**：12 列全部混合(6类一起)算偏度/峰度，**0 列超标**；直方图(`exploration/histograms_normality.png`)一看却发现好几列明显多峰(尤其 northness 两端各一个峰)——因为偏度/峰度这类统计量对"多峰"不敏感，混合多个类别天然会产生多峰形状，数字上测不出来。**按类别分开算才是真实的**：72 组(6类×12变量)里 19 组超标。
-- 揪出最严重的一组：`native_scrub` 的 `NBR_pre`(偏度-2.95，峰度10.85)、`NDVI`(偏度-2.18，峰度5.95)——按数值从低到高排序找到具体那个点 `(1567930.4, 5170212.3)`，**正好是之前肉眼抽查时标记过的"5号点"**（当时归类"裸地/灌丛交界"可疑点、后来确认保留）——这次统计上又独立指向同一个点，两条完全不同的路径(肉眼+统计)对上了。目视确认这个点在地图上正好卡在两个 LCDB 多边形颜色交界线上，删除。删完 `NBR_pre` 偏度降到-1.79/峰度4.83，`NDVI` 降到-1.48/2.86，其他几个波段也跟着改善，非正态组合总数 19→17。
+- 揪出最严重的一组：`broadleaf_scrub` 的 `NBR_pre`(偏度-2.95，峰度10.85)、`NDVI`(偏度-2.18，峰度5.95)——按数值从低到高排序找到具体那个点 `(1567930.4, 5170212.3)`，**正好是之前肉眼抽查时标记过的"5号点"**（当时归类"裸地/灌丛交界"可疑点、后来确认保留）——这次统计上又独立指向同一个点，两条完全不同的路径(肉眼+统计)对上了。目视确认这个点在地图上正好卡在两个 LCDB 多边形颜色交界线上，删除。删完 `NBR_pre` 偏度降到-1.79/峰度4.83，`NDVI` 降到-1.48/2.86，其他几个波段也跟着改善，非正态组合总数 19→17。
 - **最终点表**：**211 点**（又删了1个）。
-- 结论方向：RF 分类本身不要求正态，正态性主要服务 §4 回归；剩下17组非正态里 native_scrub/exotic_pine 最突出，是否需要变换、变换哪个，留到"变换"那步定。
+- 结论方向：RF 分类本身不要求正态，正态性主要服务 §4 回归；剩下17组非正态里 broadleaf_scrub/exotic_pine 最突出，是否需要变换、变换哪个，留到"变换"那步定。
 
 ## Lab 资源链接（Helen 给的 + lab 出处）
 
