@@ -46,10 +46,8 @@ for cls, names in GROUPS.items():
     summary.append((cls, ha))
     print(f"{cls:18s} {ha:7.1f} ha  -> {out_fc}")
 
-# carry over the already-finalized ones for a complete picture
-already = [("exotic_pine", 36.7), ("cleared_pine", 188.9)]
-print("\n=== Final 2024 class areas (5-class scheme, bare_rock dropped) ===")
-total = sum(ha for _, ha in summary + already)
-for cls, ha in sorted(summary + already, key=lambda x: -x[1]):
-    print(f"  {cls:18s} {ha:7.1f} ha  ({100*ha/total:4.1f}%)")
-print(f"  {'TOTAL classified':18s} {total:7.1f} ha  (AOI = 467.3 ha)")
+# exotic_pine/cleared_pine are done separately in 11_fix_cleared_pine_overlap.py
+# (NOT in 07 - that version double-counted against these 3 classes, see 11's
+# docstring). Run 11 after this to get the complete 5-class picture + totals check.
+print("\nThese 3 classes are correct as-is. For exotic_pine/cleared_pine + the")
+print("full 5-class total (should sum to ~467.3 ha), run 11_fix_cleared_pine_overlap.py.")
