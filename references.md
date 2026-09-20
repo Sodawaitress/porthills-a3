@@ -30,6 +30,11 @@
 - Conservation Science and Practice, e70173. DOI 10.1111/csp2.70173
 - 要点：stochastic↔persistent；30m Landsat 尺度；诚实调子。用于：概念 + §6 limitations 语气。
 
+**A6. Coppoletta, Merriam & Collins (2016)** — 火后植被驱动重烧烈度（2024火场复现新找的）✅出处核实过（treesearch.fs.usda.gov 摘要页读的全文）
+- *Post‐fire vegetation and fuel development influences fire severity patterns in reburns.* Ecological Applications 26(3), 686–699. DOI 10.1890/15-0225
+- 要点：加州内华达山脉4场火(2000-2010)、2012年被重烧的跟踪研究——高烈度初次火→枯立木+灌丛增多→跟恶劣火天气叠加→重烧时更容易高烈度。
+- 用于：解释2024火场为什么cleared_pine占比这么大(金雀花从19.5%涨到30.0%)——不是巧合，是文献记录过的机制，跟Wyse2016(金雀花易燃本身)是互补角度。
+
 ---
 
 ## B. 报告/数据源（只引"事实数据"，不算"3 篇"）
@@ -52,6 +57,26 @@
 - **JM 可分性 / 图像分类** → Richards, J.A. (2013) *Remote Sensing Digital Image Analysis* (Springer)。⏳ 核版次/页。
 - **gorse 卫星制图（花期黄）** → 08 脚本引 "Satellite mapping of gorse at regional scales"（researchgate 230694091）⏳ 补确切作者年份再用。
 - **Cohen's d（效应量）** → Cohen, J. (1988) *Statistical Power Analysis for the Behavioral Sciences.* → 用于报告红边/花期分离度描述。
+
+---
+
+## E. 2024火场复现 — 待核（WebFetch被403/跳转拦了，Yu 自己浏览器打开确认）
+> 这几条我只读到 WebSearch 摘要，**没读到全文**，标题/年份/方法描述都可能有偏差——
+> 点开链接自己核实之后再引用，核实之前当"线索"不当"事实"。
+
+- **⏳E1** 疑似 2025年，*Fire* 期刊 (MDPI) 8(6):230，DOI `10.3390/fire8060230`（打开会跳转到
+  `mdpi.com/2571-6255/8/6/230`）。主题：用 BULC-D 算法测华盛顿州2020火的"durable fire
+  refugia"+ delayed canopy loss，多传感器时间序列。如果以后想把 refugia 那步(US7等效)
+  做得比现在的 dNBR 阈值更严谨，这个方向的候选方法。
+- **⏳E2** *Fire Ecology* (SpringerOpen)，DOI `10.1186/s42408-023-00218-y`（
+  `fireecology.springeropen.com/articles/10.1186/s42408-023-00218-y`，会被重定向到需要登录
+  的 `link.springer.com`，尝试直接开 SpringerOpen 那个网址可能绕过）。主题：ALS(机载LiDAR)+
+  Sentinel-2 做"Atlantic landscapes"燃料模型图——方法上直接支持我们这次CHM+S2的路子，
+  但具体燃料分类方案/准确率数字没核实到。
+- **⏳E3** frames.gov 目录条目 `frames.gov/catalog/62292`，标题大意"Fuel type classification
+  using airborne laser scanning and Sentinel 2 data in Mediterranean forest affected by
+  wildfires"——跟我们这次情况（火烧后地中海气候森林、ALS+S2）几乎是同一个场景，值得
+  优先核实，但没读到全文/确切作者年份。
 
 ---
 
