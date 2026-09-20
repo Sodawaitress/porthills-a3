@@ -73,10 +73,14 @@
   的 `link.springer.com`，尝试直接开 SpringerOpen 那个网址可能绕过）。主题：ALS(机载LiDAR)+
   Sentinel-2 做"Atlantic landscapes"燃料模型图——方法上直接支持我们这次CHM+S2的路子，
   但具体燃料分类方案/准确率数字没核实到。
-- **⏳E3** frames.gov 目录条目 `frames.gov/catalog/62292`，标题大意"Fuel type classification
-  using airborne laser scanning and Sentinel 2 data in Mediterranean forest affected by
-  wildfires"——跟我们这次情况（火烧后地中海气候森林、ALS+S2）几乎是同一个场景，值得
-  优先核实，但没读到全文/确切作者年份。
+- **✅E3 已核实**（WebFetch 从 frames.gov 读到全文摘要，2026-09-21）：**Domingo, D.; de la Riva, J.;
+  Lamelas, M.T.; García-Martín, A.; Ibarra, P.; Echeverría, M.T.; Hoffrén, R. (2020).**
+  *Fuel type classification using airborne laser scanning and Sentinel-2 data in Mediterranean
+  forest affected by wildfires.* **Remote Sensing 12(21):3660.** DOI 10.3390/rs12213660
+  - 方法：ALS + Sentinel-2 + 136 野外样方；SVM(径向核)；关键特征=25th 分位高度、均值以上回波占比、
+    rumple 结构多样性、NDVI；**OA 59%**。
+  - 用于：📖 撑 2024 的 **CHM(ALS高度)+S2 燃料分类**方法先例 + **精度基准**（本研究 RF ~68% > 其 59%）；
+    可借"rumple 结构多样性 / 高度分位"特征。
 
 ---
 
