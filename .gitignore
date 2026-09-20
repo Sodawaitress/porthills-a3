@@ -7,6 +7,8 @@
 *.prj
 *.gpkg
 *.gdb/
+*.zip
+_lds_check/
 
 # course teaching materials (under confidentiality agreement — never publish)
 *.pdf
