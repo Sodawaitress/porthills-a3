@@ -126,10 +126,25 @@ train=45/valid=5（比2017见过的最不均情况58/42极端得多）。改成�
 
 ---
 
-## 还没做的（US2起，跟2017对齐的下一批）
-- 特征栈：Sentinel-2 火前合成 + 指数(NDVI/NBR/BSI/NDRE) + 地形(已有CHM，可以
-  直接把冠层高度也当一个特征，不只是拿来定标签——2017没有这个变量)
-- 在训练点上采样成点表（US2）
+## 9. 特征栈采样（US2等效，`14_sample_terrain_chm.py` + `15_sample_s2_features.py`）
+**地形+CHM（14，本机直接跑完了）**：elevation/slope/northness(=cos(aspect)) +
+CHM，直接 `ExtractMultiValuesToPoints` 写到250个点上，250点全部有值(0个空值)。
+改用 `ExtractMultiValuesToPoints` 而不是2017的 `arcpy.sa.Sample()`——2017那次
+就是 `Sample()` 自动生成的 `OBJECTID` 字段跟真实点ID搞混了，导致过半行标签和
+波段值全部对错位（workflow.md US2方法记录有记）；`ExtractMultiValuesToPoints`
+直接写回原始要素，没有另外的ID字段可以搞混，从根上绕开这个坑。
+输出：`TrainingPoints_2024_terrain.csv`（join key = `FID`）。
+
+**Sentinel-2 光谱+指数（15，需要GEE认证，还没跑）**：火前合成窗口跟01b/02的
+dNBR一致(2024-01-10~02-13)，波段=B2/B3/B4/B5/B6/B7/B8/B8A/B11/B12，
+指数=NDVI/NBR/NDWI/NDRE/BSI（NDRE是2017没有的——2017火前只有Landsat 8可用
+[S2 SR火前还没上线]，红边波段只能靠07/08号脚本事后单独补采样；这次S2从一开始
+就是主特征栈的一部分，不用另外补）。**这一步需要在GEE认证过的机器上跑**
+（跟06b一样），跑完把 `TrainingPoints_2024_s2.csv` 提交回来，我这边再跟
+terrain那份按 `FID` 合并成最终点表。
+
+## 还没做的（跟2017对齐的下一批）
+- 15号脚本在认证机上跑完 → 16号脚本合并 terrain+S2 成最终点表
 - §3-§5 统计探索/回归/分类流程
 
 ## 清理记录（2026-09-21）
