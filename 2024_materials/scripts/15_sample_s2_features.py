@@ -37,7 +37,9 @@ PTS_CSV = os.path.join(HERE, "..", "TrainingPoints_2024_wgs84.csv")
 OUT_CSV = os.path.join(HERE, "..", "TrainingPoints_2024_s2.csv")
 
 AOI = ee.Geometry.Rectangle([172.55, -43.65, 172.67, -43.56])
-PRE_START, PRE_END = '2024-01-10', '2024-02-13'   # same window as 01b/02's dNBR pre-fire composite
+# ⚠️ 2024-01-10 窗口太窄(只2景) -> 130/250点落云洞。特征栈要的是"无云覆盖"，
+# 跟 dNBR 的紧窗口可不同。回到 2023-12-01 -> 4景、250/250全采到、仍是火前夏季。
+PRE_START, PRE_END = '2023-12-01', '2024-02-13'
 
 
 def mask_s2(img):
