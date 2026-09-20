@@ -7,6 +7,26 @@ Kaupapa Tuhika 3 · Lincoln University · S2 2026
 
 ---
 
+## 📍 当前数据文件清单（永远维护成最新状态，不是流水账——换机器/换会话先看这块）
+
+> 下面每条方法记录都是**发生时**写的历史，按时间顺序读会很乱。这张表只回答一个问题：
+> **"现在(最新)哪个文件是权威的、干什么用的"**——改了文件结构就立刻更新这张表，别等回头补。
+
+| 文件 | 行数 | 用途 | 状态 |
+|---|---|---|---|
+| `scripts/PortHills_PointTable.csv` | 211 (6类) | **US1-US6 官方结果的唯一数据源**——report.md 里所有数字(OA=0.71/0.742, R²=0.41-0.48等)都来自这份，**不要改它** | ✅ 权威 |
+| `scripts/PortHills_PointTable_complete.csv` | 291 = 211原始+80扩样本 | **只用于US4的"RF要不要更多数据"侧实验**(176点vs256点对比)，带`source`列区分来源。**不用于分类(US6)**，因为80个扩样本点只覆盖4类，混进分类会破坏类别平衡 | ✅ 侧实验专用，別跟上面混 |
+| `scripts/PortHills_4class_expansion.csv` | 80 (4类，不含bare_rock/cleared_pine) | 上面`_complete.csv`的原始材料，已并入，单独留着方便溯源 | 已被合并，非独立使用 |
+| `scripts/TrainingPoints_wgs84.csv` | 211 | 211点的经纬度版，喂给GEE脚本(07/08/09)用 | ✅ 权威(2026-09-20修过OID join bug，之前215点旧版已删) |
+| `cleared_pine_blocks.geojson` | 待定 | **cleared_pine 的真实多边形边界**(2026-09-20新增，Hansen方法算出来但之前没导出过)，等GEE机器跑完`09_export_cleared_pine_polygon.py`推回来 | 🔲 进行中 |
+| gdb `TrainingPoints_raw` | 211 | 上面CSV对应的**几何数据源**，`OID`字段是唯一可靠的join key(不要用Sample()自己生成的OBJECTID) | ✅ 权威 |
+| gdb `TrainingPoints_4class_expansion` | 88(80个valid_data=1) | 80点扩样本的几何数据源 | 侧实验专用 |
+| gdb `lcdbPorthills` | 覆盖全AOI | FuelClass只有4类完整覆盖(pasture/gorse_broom/exotic_pine/broadleaf_scrub)，**bare_rock和cleared_pine都没有多边形**(2026-09-20核实，不是处理错误，是原始数据/流程从没产出过) | ⚠️ 已知空白，US7/US9要处理 |
+
+**一句话记住**：分类/report里的数字 = 永远查`PortHills_PointTable.csv`(211)；`_complete.csv`(291)只在讨论"样本量对RF有没有帮助"这个话题时才会出现。
+
+---
+
 ## A3 是什么（A2 → A3 的转变，先搞懂这个再动手）
 
 | | A2（提案，已交） | **A3（现在）** |
