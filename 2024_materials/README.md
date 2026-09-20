@@ -169,8 +169,34 @@ y轴，249个点全挤成一条线看不出来——查出是2个点(FID 105/118
 地形三兄弟(elev/slope/northness)修完之后都是0。
 图：`exploration/boxplots_by_class_2024.png`。
 
+## 12. §3 Second Pass + 两个真数据问题（`19_s3_normality_by_class.py` → `20`/PID修复）
+**正态性**：19/95(类,变量)组合非正态(5类×19变量)。`chm`**全部5类都非正态**(右偏，
+符合"大部分近地表+少数真乔木"的已知结构)；`pasture`最广(10/19变量)。
+
+**⚠️ 踩过的坑1——真实LiDAR数据空洞（已修）**：追查pasture的elev离群值时，发现
+3个点(pasture) elev=slope=northness=chm**全部精确为0**，同时NDVI等S2波段完全正常
+(~0.83-0.86，健康植被)。核实用**原始未裁剪**的DEM/DSM直接在该坐标查值，DEM和DSM
+两个都是0——不是裁剪边界效应（那是上一步slope/northness的坑），是**这片LiDAR本身
+就有数据空洞**。回查全表又发现同样问题在exotic_pine还有4个点，7个点全部聚在同一块
+约270m×290m的小范围内(NZTM x:1569560-1569825, y:5169520-5169810)——不是随机分布，
+是真实的局部覆盖缺口。**处理**：删掉这7点（跟2017遇到真数据缺口时的处理原则一样：
+真缺口就删+如实记录，不硬凑），pasture降到47点、exotic_pine降到46点，其余3类仍50。
+
+**⚠️ 踩过的坑2——我自己造成的ID对不上（已修，比坑1更值得记）**：删完7点后用
+shapefile的`FID`字段去同步`TrainingPoints_2024_terrain.csv`——**shapefile删行后
+FID会自动从0重新连续编号**，不是保留原编号，导致同步时把错的FuelClass/split值
+写到了错的行上（cleared_pine从50变成"57"这种荒谬数字就是这么来的）。**这正是
+`ExtractMultiValuesToPoints`那条经验想防的同一类坑，但这次是我自己在别的地方
+(手动同步脚本)又踩了一遍**——教训是这条规则不能只用在"选哪个采样工具"上，
+**任何时候只要shapefile可能被删过行，都不能再拿它的`FID`当跨文件的join key**。
+**修法**：加了一个手动赋值、之后再也不会被自动重编号的**`PID`字段**（0-242，
+一次性赋值），所有CSV(terrain/wgs84)重新按`PID`导出；`15_sample_s2_features.py`
+和`16_merge_point_table.py`都已改成认`PID`不认`FID`。**S2那份需要重新在GEE机器
+上跑一次**(15号脚本)，因为S2数据是按旧的FID编号采的，现在对不上了。
+
 ## 还没做的（跟2017对齐的下一批：§3-§5）
-- §3 Second Pass（正态性 skew/kurt → 变换测试）
+- **15号脚本用新的`TrainingPoints_2024_wgs84.csv`(按PID)在GEE机器上重跑，16号合并**
+- §3 变换测试（这次chm/几个S2波段可能需要，US3决定#1的范围已经跑过First+Second pass）
 - §4 关系（相关表/VIF清理 → dNBR回归）—— 2024这次dNBR/火后波段还没采样，
   需要先决定Y变量怎么来（跟2017一样用dNBR连续值，还是这次有别的想法）
 - §5 分类（JM可分性 → RF → 混淆矩阵）——这次cleared_pine更连片(7块非2017的

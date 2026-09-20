@@ -78,17 +78,20 @@ print("Points to sample:", len(pts_rows))
 features = []
 for row in pts_rows:
     geom = ee.Geometry.Point([float(row['lon']), float(row['lat'])])
-    features.append(ee.Feature(geom, {'FID': int(row['FID'])}))
+    # PID not FID: shapefile FID renumbers on row deletion (bit us once already -
+    # a rebalance-after-dropping-7-bad-points run silently corrupted a join keyed
+    # on FID). PID is a manually-assigned field that never changes after creation.
+    features.append(ee.Feature(geom, {'PID': int(row['PID'])}))
 fc = ee.FeatureCollection(features)
 
 sampled = stack.sampleRegions(collection=fc, scale=10, geometries=False)
 result = sampled.getInfo()
 
-out_rows = {f['properties']['FID']: f['properties'] for f in result['features']}
-n_missing = sum(1 for row in pts_rows if int(row['FID']) not in out_rows)
+out_rows = {f['properties']['PID']: f['properties'] for f in result['features']}
+n_missing = sum(1 for row in pts_rows if int(row['PID']) not in out_rows)
 print(f"Points with no S2 value returned (masked/cloud gap): {n_missing} / {len(pts_rows)}")
 
-fieldnames = ['FID'] + bands + ['NDVI', 'NBR', 'NDWI', 'NDRE', 'BSI']
+fieldnames = ['PID'] + bands + ['NDVI', 'NBR', 'NDWI', 'NDRE', 'BSI']
 with open(OUT_CSV, 'w', newline='') as f:
     w = csv.DictWriter(f, fieldnames=fieldnames)
     w.writeheader()
