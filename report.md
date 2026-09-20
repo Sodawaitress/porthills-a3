@@ -76,11 +76,26 @@
 - **可分性**（5）：⭐ 已做（`exploration/spectral_profile_6class.png` + JM矩阵，脚本`scripts/05_separability_jm.py`）。JM指数(0~2，越大越好分)用6波段+NDVI+BSI算：**`bare_rock` 跟其余5类全部完全分开(JM=2.00)**；其余类间大多也分得不错(JM 1.9-2.0)；但 **`gorse_broom` vs `broadleaf_scrub`(JM=1.46)明显是最弱的一对**——光谱曲线图上这两条线在B5/B6/B7几乎重合。这**直接呼应了项目最早期(US1.1 k-means诊断)就担心的那个问题**("native vs gorse分不分得开")，现在用JM给出了定量证据：这两类确实存在真实的光谱混淆风险，§5分类结果如果这两类互相误判多，这里就是原因，不是模型的锅。引用 Richards (2013) *Remote Sensing Digital Image Analysis* 的JM公式。
 - **像元/对象 + 为什么**（2）：像元法(pixel-based)，不是对象法(object-based)。理由：A2就倾向像元RF；训练点本来就是逐像元采样的，跟点表结构一致；对象法要先分割，本项目训练数据量不大(211点)，分割反而可能引入额外噪声。
 - **算法 RF + 为什么 + 引用**（5）：Random Forest。理由：样本量小(每类10-46个)时比深度学习更稳定、不容易过拟合；能输出变量重要性，方便解释"哪个波段/地形对分类贡献大"；不需要假设正态分布，跟本项目§3发现的"混合类别非正态"问题无缝衔接。用 `sklearn.ensemble.RandomForestClassifier`(500棵树)，训练/验证用之前定好的空间分块split，不是重新随机分。
-- **结果 + 混淆矩阵解读 + 挂文献**（5）：⭐ 6类版本先跑出 OA=0.710/Kappa=0.638(`exploration/rf_confusion_matrix.png`，`scripts/06_random_forest_classify.py`)，但 `bare_rock` PA=0(3个验证点全错，训练点仅7个撑不起任何分类器)。**改进后的版本**：把 `bare_rock` 从RF训练/验证集里剔除，分类器只学5类真正需要靠光谱/地形区分的植被燃料类型——`scripts/06b_rf_classify_5class_no_bare_rock.py`，图`exploration/rf_confusion_matrix_5class.png`。⚠️ 局限说明（核实过，之前一度误写成"bare_rock有现成边界可以直接叠加"，已更正）：`bare_rock`从未有过完整多边形边界，只有7个训练点，剔除它只解决了"分类训练"这一层问题，不代表全图上bare_rock的位置已知——任何wall-to-wall分类图上这部分仍是数据空白，是诚实的局限，不是已解决的问题。**5类版本：OA=0.742，Kappa=0.676**(按Landis&Koch(1977)分级仍是"substantial agreement"，但比6类版本全面提高)，`cleared_pine`这次PA=UA=1.000(满分)。混淆矩阵最大的误判还是 **`broadleaf_scrub`→`gorse_broom` 错7个**(20个真实broadleaf_scrub里，跟6类版本几乎一样的比例)——**跟US5的JM指数(gorse_broom vs broadleaf_scrub=1.46，全部15对最低)完全对上**，证实这是这两类本身光谱空间重叠的真实限制，不是bare_rock拖累的假象、也不是模型没调好。特征重要性：`BSI`/`pre_B5`/`pre_B4`/`pre_B3`最重要，地形变量(`elev`/`northness`)排最后——光谱信息比地形对分类贡献更大。
-- **精度评论 + 怎么改**（5）：把 `bare_rock` 从"分类目标"改成"已知掩膜"是这里的核心方法论决定——它不是回避小样本问题，而是承认"这类地表的边界本来就是确定性已知的，不该强迫一个只有7个样本的统计模型去重新学一遍"，这样处理后地图正确性反而更高(真实裸岩像元用手绘边界填色，不会被只学了7个点的分类器误判成别的类)。剩下的真局限是 `gorse_broom`/`broadleaf_scrub` 这对：改进方向——①加入更能区分二者的特征(比如红边指数，本项目Landsat8没有，S2才有，见workflow.md火前必须用L8的局限)；②可以试试RF回归里筛出来的关键变量(pre_B5/NDVI)加权或做特征选择，减少弱变量干扰。
+- **结果 + 混淆矩阵解读 + 挂文献**（5）：⭐ 6类版本先跑出 OA=0.710/Kappa=0.638(`exploration/rf_confusion_matrix.png`，`scripts/06_random_forest_classify.py`)，但 `bare_rock` PA=0(3个验证点全错，训练点仅7个撑不起任何分类器)。⚠️ 中间版本(5类，剔除bare_rock)一度报出OA=0.742，但那版`cleared_pine`训练点(28个)后来查出26个位置根本不在`exotic_pine`范围内，是位置错误撑起的假象数字，已作废。修正cleared_pine位置(19个点，真实落在exotic_pine内)后单独测5类模型，`cleared_pine`PA仅0.067(15个验证点14个错)——19个点分散在3-4个小图斑，空间分块训练/验证一切，学不出稳定边界，跟bare_rock是同一类问题。**最终版本**：`bare_rock`和`cleared_pine`都从RF训练/验证集里剔除，分类器只学4类真正靠光谱/地形能区分、且样本量足够的植被燃料类型——`scripts/06c_rf_classify_4class_final.py`，图`exploration/rf_confusion_matrix_4class_final.png`。**4类最终结果：OA=0.684，Kappa=0.579**(按Landis&Koch(1977)分级为"moderate agreement"，比6类的0.710略低，但这是把两个"用位置错误数据撑出来的虚高分数"拿掉之后的诚实数字)。混淆矩阵最大的误判仍是 **`gorse_broom`→`exotic_pine`/`broadleaf_scrub`各错3/2个、`broadleaf_scrub`→`gorse_broom`错7个**(20个真实broadleaf_scrub里)——**跟US5的JM指数(gorse_broom vs broadleaf_scrub=1.46，全部15对最低)完全对上**，证实这是这两类本身光谱空间重叠的真实限制。特征重要性：`pre_B4`/`pre_B3`/`pre_B5`最重要，地形变量(`elev`/`northness`)排最后——光谱信息比地形对分类贡献更大。
+- **精度评论 + 怎么改**（5）：把 `bare_rock` 和 `cleared_pine` 都从"分类目标"改成"已知掩膜"是这里的核心方法论决定——两者的边界都不该靠只有个位数到十几个样本的统计模型去猜。`bare_rock`没有完整多边形(诚实的空白，US7/US9出图时无法体现)；`cleared_pine`则真的找到了边界(`cleared_pine_real`，Hansen森林损失∩exotic_pine，6.7ha)，可以在最终地图上直接叠加，不用靠分类器推断。这样处理后OA数字比中间版本低，但每一个数字都立得住，不是被位置错误的数据撑起来的。剩下的真局限是 `gorse_broom`/`broadleaf_scrub` 这对，属于这两类本身光谱空间重叠的已知限制。
+- **refugia 支线**（US7）：⭐ 已做——4类分类器套到全部22波段栈的每个像元(不切分，用全部176点重新训练，注意这跟上面OA=0.684是两次不同的模型拟合，不能说这张全图逐像素验证过)，裁剪到真实火场边界(`Port_Hills_2017_Fire_Boundary.shp`，NZTM下正确面积1760.9ha，跟训练AOI吻合)。refugia定义=severity==0(dNBR<~100，Key&Benson未燃阈值)。
+  - **跟植被类型的关系**：refugia占比 `exotic_pine`21.4% ≈ `pasture`19.9% > `broadleaf_scrub`14.9% ≈ `gorse_broom`14.0%——松林/牧场幸存率明显更高，方向上跟"gorse_broom/broadleaf_scrub本身烧得更狠"这个结论(见R4额外调研CHM那段)互相印证。
+  - **跟地形的关系**：17519个有效像元里，refugia(3104px) vs 过火区(14415px)在三个地形变量上全部有显著差异(Welch t检验 p<1e-20)：refugia**高程更高**(247.9m vs 219.2m)、**坡度更缓**(16.1° vs 17.5°)、**朝向更不朝北**(northness 0.13 vs 0.28，南半球朝北=向阳干燥)——三个方向都符合火生态学常识，样本量大容易显著，但方向一致+跟已知机制吻合，是真实信号。
+  - 脚本：`scripts/12_wall_to_wall_classify.py`(出全图)、`scripts/13_refugia_analysis.py`(refugia分析)，图：`exploration/refugia_veg_terrain.png`。
 
 ### R6 流程图（10分 · 喂：US8）
 - 放**更新版**流程图（含 §3/§4 统计层，见 US8 的 4 个框）+ 一段 **way forward**（往 A4 最终分类+精度走）。
+
+- ⭐ **way forward 内容草稿——可迁移的方法 + 需要什么数据才能做得更好**（不对未知的未来事件断言"能/不能解决"，只讲这次验证过什么、缺什么数据、有了会怎样）：
+
+  **全流程一句话总结（可迁移的方法本身，跟具体哪场火无关）**：火前Landsat 8合成(云掩膜+缩放) → LCDB `Class_2012`+航片判读做训练标签(`cleared_pine`用Hansen森林损失∩对应植被多边形定义，这个"用变化检测数据代替光谱粗筛"的思路对任何有Hansen覆盖的森林火都适用) → 15m像元纯度检查(半个Landsat像元宽，这个规则可以直接照搬到任何30m分辨率的分类任务) + 空间分块切分(防空间自相关，这条规则对任何遥感分类都成立) → §3-§5统计探索/回归/分类流程 → 全栅格套用分类器+裁真实边界 → refugia跟植被类型/地形交叉分析。这一整套流程不依赖某场具体的火，可以直接套到任何有Landsat/Sentinel覆盖的森林火事件上。
+
+  **需要什么数据、有了会带来什么改善**（基于这次项目里具体缺过的东西，不是泛泛而谈）：
+  - **火前后紧邻时间点的Sentinel-2 L2A地表反射率**：本项目因为AOI在2017年3月前没有S2大气校正产品，只能用Landsat 8。已经测过：加上红边波段能把`gorse_broom`/`broadleaf_scrub`这对的JM从1.459提到1.71。**如果有完整S2覆盖**，不只是多几个波段，还能做真正的物候时间序列(不止一张花期图，是全年曲线)，这条路值得投入。
+  - **火前几个月内飞行的LiDAR(冠层高度+纹理)**：本项目测过的两版CHM都有时间错位问题(火后3-4年有反向因果风险；火前2年覆盖不全)。**如果有真正贴近火前的LiDAR**，文献显示CHM+纹理能带来约14%的分类准确率提升——这是解决`gorse_broom`/`broadleaf_scrub`光谱混淆问题最值得优先尝试的方向。
+  - **火后短时间窗内的多颗卫星重复观测**：本项目`cleared_pine`19个点里16个撞上火后云层，只能放弃对应的dNBR数据。**卫星数量越多、重访周期越短**，火后几天内拿到干净影像的概率越高，这类"数据本该有但被云挡住"的损失就能实质性减少。
+  - **更大范围/更多样本的训练点来源**：`cleared_pine`(19点)、`bare_rock`(7点)样本小，是这片AOI里这两类地表本来面积就小，不是方法学问题。**如果目标区域这两类地表面积更大**，或能拿到航空摄影测量/无人机等更高分辨率的判读底图，样本量瓶颈能直接缓解。
+  - **细粒度(而非站点尺度)燃料含水率/风场数据**：本项目论证过站点级天气数据在几平方公里AOI内太均匀，解释不了像元级差异。**如果能拿到高分辨率(如WRF-Fire之类)模拟的风场/含水率场**，能给回归模型补上一个目前完全缺失的变量类别。
 
 ### R7 地图（4分 · 喂：US6/US7/US9）
 - 高质量**分类图** + **refugia 图**；每图查 6 要素（title/legend/scale/north/inset/source+EPSG:2193）。
