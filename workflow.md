@@ -14,7 +14,7 @@ Kaupapa Tuhika 3 · Lincoln University · S2 2026
 | `scripts/PortHills_PointTable.csv` | **202**(6类，2026-09-20更新) | US1-US6数据源；⚠️cleared_pine从28→19点重建过，US3-US6里涉及cleared_pine的数字待重跑 |
 | `scripts/PortHills_PointTable_complete.csv` | 291 (211+80，⚠️旧版，cleared_pine未更新) | US4样本量侧实验用，待重建 |
 | `scripts/PortHills_4class_expansion.csv` | 80 (4类，不受cleared_pine问题影响) | `_complete.csv`原始材料 |
-| `scripts/TrainingPoints_wgs84.csv` | 211 (⚠️旧版，cleared_pine未更新) | 喂GEE脚本(07/08)用，待重新导出 |
+| `scripts/TrainingPoints_wgs84.csv` | **290**(202主点+88扩样本，合并单文件) | 喂GEE脚本(07/08)用，`source`列区分main/expansion，扩样本OID+10000避免撞号 |
 | gdb `cleared_pine_real` | 4块，6.698ha | cleared_pine真实边界(Hansen∩exotic_pine)，可当refugia排除掩膜 |
 | gdb `TrainingPoints_raw` | **202**(2026-09-20: cleared_pine 28→19) | 几何数据源，join key用`OID`字段 |
 | gdb `TrainingPoints_4class_expansion` | 88(80个valid) | 80点扩样本几何数据源，不受cleared_pine问题影响 |

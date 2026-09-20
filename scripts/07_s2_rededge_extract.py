@@ -1,17 +1,18 @@
 """
-US5 补充方案2 - 给211个训练点提取 Sentinel-2 红边波段(B5/B6/B7)，
+US5 补充方案2 - 给训练点提取 Sentinel-2 红边波段(B5/B6/B7)，
 测试能不能把 broadleaf_scrub vs gorse_broom 这对JM=1.46的老大难分开。
 Landsat 8 没有红边波段，S2才有，所以这是L8体系里补不出来的信息。
 
-跑法：在已经装好+认证过 earthengine-api 的那台机器上跑：
-  python 07_s2_rededge_extract.py
-输出：scripts/s2_rededge_by_point.csv，用真实 OID（TrainingPoints_wgs84.csv 里的
-OID列，来自 TrainingPoints_raw 的 OID@，不是行号）做join key -- 之前 Sample()
-join错过一次(用错了字段)，这里直接从头用真实OID，不留隐患。
+点数不写死在这里，直接读 TrainingPoints_wgs84.csv 有多少行算多少——那份文件
+才是当前点数的唯一权威来源(见 workflow.md 开头的数据文件清单)，改了点表直接
+git pull 这份CSV，脚本不用跟着改。这份CSV现在是**合并后的单一文件**(290行=
+202主点+88扩样本点，带`source`列区分'main'/'expansion'，扩样本OID统一+10000
+避免跟主点OID撞号)——本脚本只关心 gorse_broom/broadleaf_scrub 这两类的对比，
+两个来源的点都会被采样，输出里靠 FuelClass 筛选，不用管 source。
 
-⚠️ 2026-09-20更新：TrainingPoints_wgs84.csv 已经从215点(旧版，含4个后来删掉的
-重复/离群点)重新导出成211点(当前canonical版本)，带真实OID列。如果你本地这份
-CSV还是旧的215行版本，先 git pull 一下。
+跑法：在已装好+认证过 earthengine-api 的机器上跑：python 07_s2_rededge_extract.py
+输出：scripts/s2_rededge_by_point.csv，用真实OID(TrainingPoints_wgs84.csv里的
+OID列，来自TrainingPoints_raw的OID@)做join key，不用行号/自己生成的序号。
 """
 import ee, os
 import pandas as pd
@@ -56,7 +57,7 @@ for f in result['features']:
     rows.append(props)
 
 out_df = pd.DataFrame(rows).sort_values('OID').reset_index(drop=True)
-out_df = out_df.merge(pts_df[['OID', 'lon', 'lat', 'FuelClass', 'class_id', 'split']],
+out_df = out_df.merge(pts_df[['OID', 'lon', 'lat', 'FuelClass', 'class_id', 'split', 'source']],
                        on='OID', how='left')
 out_df.to_csv(OUT_CSV, index=False)
 print("wrote ->", OUT_CSV)

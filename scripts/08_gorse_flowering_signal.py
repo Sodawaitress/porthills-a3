@@ -10,13 +10,14 @@ https://www.researchgate.net/publication/230694091)。
 讨论过的同一个逻辑：pre-fire或at least独立于本次火的都可以)。用多年中值合成
 是为了避开"单张影像刚好被云挡住"这个文献里提到的已知限制。
 
-跑法：在已装好+认证过 earthengine-api 的机器上跑。
+点数不写死在这里，直接读 TrainingPoints_wgs84.csv 有多少行算多少(见 workflow.md
+开头的数据文件清单)。这份CSV现在是**合并后的单一文件**(290行=202主点+88扩样本点，
+带`source`列区分'main'/'expansion'，扩样本OID统一+10000避免撞号)——本脚本只关心
+gorse_broom/broadleaf_scrub 对比，两个来源的点都会被采样，输出靠 FuelClass 筛选。
+
+跑法：在已装好+认证过 earthengine-api 的机器上跑：python 08_gorse_flowering_signal.py
 输出：scripts/gorse_flowering_by_point.csv，用真实OID(TrainingPoints_wgs84.csv
 里的OID列)做join key，不用行号。
-
-⚠️ 2026-09-20更新：TrainingPoints_wgs84.csv 已经从215点(旧版，含4个后来删掉的
-重复/离群点)重新导出成211点(当前canonical版本)，带真实OID列。如果你本地这份
-CSV还是旧的215行版本，先 git pull 一下。
 """
 import ee, os
 import pandas as pd
@@ -66,7 +67,7 @@ result = sampled.getInfo()
 
 rows = [f['properties'] for f in result['features']]
 out_df = pd.DataFrame(rows).sort_values('OID').reset_index(drop=True)
-out_df = out_df.merge(pts_df[['OID', 'lon', 'lat', 'FuelClass', 'class_id', 'split']],
+out_df = out_df.merge(pts_df[['OID', 'lon', 'lat', 'FuelClass', 'class_id', 'split', 'source']],
                        on='OID', how='left')
 
 # 花期"黄度"指标: 黄色反射红+绿高、蓝低 -> 用 (Red+Green)/2 - Blue 做一个简单黄度指数
