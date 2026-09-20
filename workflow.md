@@ -355,6 +355,16 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - **数据表合并**：`scripts/PortHills_PointTable_complete.csv`(282行=202主点+80扩样本干净点)，带`OID`+`source`列，专供US4样本量对比用，不用于分类。
 - **bare_rock + cleared_pine 最终都从RF分类训练集剔除**：前者7点无完整边界(核实过，gdb里从未有过bare_rock多边形，是诚实的地图空白)；后者19点分3-4个小图斑，空间分块下学不出边界(PA=0.067)，但有`cleared_pine_real`真实多边形(6.698ha)可作已知掩膜。**US6最终版=4类模型：OA=0.684，Kappa=0.579**，脚本`scripts/06c_rf_classify_4class_final.py`。历次版本(6类0.710→5类-badCP 0.742→5类-goodCP 0.583→4类-final 0.684)里这个最诚实，之前更高的分数都是位置错误的cleared_pine撑出来的假象。
 
+## 方法记录 · US7 refugia分析（2026-09-20）
+
+- **全栅格分类图**：4类RF分类器(用全部176点重新训练，不切分)套到`PortHills2017_stack.tif`全部55687个有效像元，`scripts/12_wall_to_wall_classify.py`。⚠️ 这张图的精度不是直接验证过的——OA=0.684/Kappa=0.579是`06c`脚本切分训练/验证测出来的，`12`脚本是另外用全部数据重新训练，两次是不同的模型拟合，只能说"这套方法大概这个水平"，不能说"这张具体的图逐像素验证过"。
+- **裁剪边界踩坑**：一开始直接用栅格原始范围，算出总面积5011ha，比实际AOI(1761ha)大3倍——原始栈的矩形范围本来就比研究区大。改用项目里真实的`Port_Hills_2017_Fire_Boundary.shp`裁剪。⚠️ **面积计算踩过一次坑**：这个shapefile坐标系是Web Mercator，在NZ这个纬度直接算SHAPE@AREA会把面积放大近1倍(误报"火场3363ha"，实际投影到NZTM后是**1760.9ha**，跟训练AOI几乎完全吻合)——**任何面积/距离量算前必须先确认在等积/合适的投影下**，这条以后要记住。裁剪后总分类面积1767.78ha，跟真实火场对上了，覆盖完整，不是只覆盖一半。
+- **severity栅格对齐**：`severityClip`和分类图的像元大小有细微差异(29.98/29.91 vs 30.0)，直接算容易错位，用`Resample`+显式指定左下角坐标和行列数对齐到同一网格，17519个像元重叠有效。
+- **refugia定义**：severity==0(dNBR<~100，Key&Benson未燃阈值，前面R5那节已经验证过跟severity字段对得上)。
+- **结果1 · 跟植被类型的关系**：refugia比例 `exotic_pine`21.4% ≈ `pasture`19.9% > `broadleaf_scrub`14.9% ≈ `gorse_broom`14.0%——松林/牧场幸存率明显高于原生灌丛/金雀花，跟US4/CHM那次"gorse_broom和broadleaf_scrub本来就烧得更狠"的方向一致，两条独立分析互相印证。
+- **结果2 · 跟地形的关系**：refugia(3104px) vs 过火区(14415px)，Welch t检验三个地形变量全部显著(p<1e-20)：refugia高程更高(247.9m vs 219.2m)、坡度更缓(16.1° vs 17.5°)、朝向更不朝北(northness 0.13 vs 0.28，南半球朝北=向阳=更干燥易燃)——三个方向都符合火生态学常识。样本量大(p值容易显著)，但三个变量方向一致+跟已知机制吻合，不是噪声。
+- 脚本：`scripts/13_refugia_analysis.py`，图：`exploration/refugia_veg_terrain.png`。
+
 ## 方法记录 · US3 First Pass（2026-09-19）
 
 - 跑范围：6 个火前波段 + NDVI/BSI/NBR_pre + elev/slope/northness，共12列（决定#1定的范围）。
