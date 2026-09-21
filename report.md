@@ -72,9 +72,12 @@
 - ⭐ **NDVI/BSI可视化（Helen A1原话点名问过"why don't you present your NDVI and BSI?"，这次正面回应）**：
   👤 A1脚本(第119-135行)本来就算了这两层——NDVI(火前，>0.25当植被掩膜，理由：裸岩/道路在
   火前火后都稳定，会被误判成"没烧"，先用NDVI把非植被排除掉)、BSI(独立核查裸土在哪，
-  公式=((RED+SWIR)-(NIR+BLUE))/((RED+SWIR)+(NIR+BLUE)))。**这次正式把这两张图放进报告**
-  (自然色/CIR/SWIR烧痕组合 + NDVI + BSI，A1脚本第270-292行已经建好了这几个GEE图层，
-  §5落地时需要真的截图导出成静态png，不能只留在GEE Code Editor里)。
+  公式=((RED+SWIR)-(NIR+BLUE))/((RED+SWIR)+(NIR+BLUE)))。**已导出成静态图**
+  (`exploration/A1_visualisation_panels.png`：自然色火前/火后+CIR+SWIR烧痕组合+NDVI+dNBR
+  六联图，`exploration/A1_bsi.png`单独BSI图，`scripts/24_A1_export_figures.py`直接从本地
+  `PortHills2017_stack.tif`读，不用连GEE)。六联图里**火后自然色那格肉眼就能看出烧痕
+  (暗黑色块)跟真云(亮白色块)完全不是一回事**，dNBR那格同一块暗色区域正好是dNBR最高
+  (深红)的地方——这就是"智能掩膜为什么要保留这块"最直接的可视化证据。
 
 ### R4 关系（25分 · 喂：US4）
 - **相关表**（5）：⭐ 已算：跟 dNBR 相关最强的是 `NDVI`(0.475) 和 `BSI`(-0.460)——火前越绿烧得越重(燃料够烧)，裸土越多烧得越轻(没什么好烧)，符合直觉；`elev` 几乎零相关(-0.014)，高程本身不直接预测烧毁程度。
