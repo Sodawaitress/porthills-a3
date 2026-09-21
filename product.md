@@ -81,16 +81,17 @@
 
 | # | 候选 | 出处 | 已验证？ | 适合2017吗 |
 |---|---|---|---|---|
-| F1 | Spearman秩相关跟Pearson并排跑 | references.md E3 Domingo2020 | ✅已在2017点表上跑过(`scripts/04e_spearman_correlation.py`)：n=186，**排序真的变了**——`pre_B4`从Pearson显著(p=0.004)变Spearman不显著(p=0.069)，跟§3已发现的"19/72组非正态"互相印证 | ✅适合，是真结果不是空谈，§4现成能用 |
-| F2 | "每个变量单独出图"当§3探索方法的引用背书 | references.md E2 Solares2023 | 方法本身2017已经在做(boxplot/hist逐变量) | ✅适合，纯补引用零成本 |
-| F3 | Gini重要性引用 + 可选drop-one法 | E2 Solares / E3 Domingo | Gini重要性2017已隐式在用(sklearn默认)；drop-one没做过 | ✅引用部分适合；drop-one算新分析，值不值得看时间 |
-| F4 | RF过拟合反例对照(Domingo拟合0.99/验证0.56 vs 本研究OOB0.627/验证0.71) | E3 Domingo2020 | 数字都现成(2017 US6已有) | ✅适合，纯讲故事素材 |
-| F5 | skew/kurt当标准描述量的引用背书 | E2 Solares2023 Table3 | 方法2017已在用 | ✅适合，纯补引用 |
+| F1 | Spearman秩相关跟Pearson并排跑 | references.md E3 Domingo2020 | ✅**已写进report.md R4**：`pre_B4`从Pearson显著(p=0.004)变Spearman不显著(p=0.069) | ✅完成 |
+| F2 | "每个变量单独出图"当§3探索方法的引用背书 | references.md E2 Solares2023 | ✅**已写进report.md R5**(可分性那段前) | ✅完成 |
+| F3 | Gini重要性引用 + 可选drop-one法 | E2 Solares / E3 Domingo | drop-one没做(SHAP已经比drop-one更强，够了不用再加) | ✅用SHAP替代完成，drop-one跳过 |
+| F4 | RF过拟合反例对照(Domingo拟合0.99/验证0.56 vs 本研究OOB0.627/验证0.684) | E3 Domingo2020 | ✅**已写进report.md R5**精度评论段 | ✅完成 |
+| F5 | skew/kurt当标准描述量的引用背书 | E2 Solares2023 Table3 | 跟F2合并一起写了 | ✅完成 |
 | F6 | 多时相/物候分gorse↔broadleaf(JM=1.46最弱对) | E2/E3 | 没做过，真新分析 | ⚠️属于A4范围，2017本身没有S2物候时序数据 |
 | — | Coppoletta(2016)重烧机制 | references.md A6 | 已核实 | ⚠️主要讲"重烧"，2017不是重烧事件，更适合2024自己的故事，不强搬 |
 | ★BUG | **火后合成掩膜误杀烧痕**：云影位/类把深色烧痕当"云影"掩掉→火后dNBR大量丢点(丢的正是烧最狠的类)。修法=火后只掩真云(不掩云影)+火前窗放宽 | 🤝本研究发现(2024 US4等效, `2024_materials/scripts/22`) | ✅**2024已证并修**：126/243丢点→243/243(0偏差)；病根用真彩+SCL云影频率热图确认(`23`)；B延窗证伪(`22b`:0救回、-142偏差) | ✅**2017其实没这个坑（2026-09-21已核实）**：A1 脚本 `PortHills_dNBR` 早就用了智能掩膜（云到处掩，**云影只掩火场外、火场内保留=烧痕**，量化242ha），且 A3 点表就是从 A1 那个 stack 采样来的——pasture 44/44、各类dNBR都齐（只cleared_pine 3/19是真云洞）。**是2024这条S2线漏了A1的做法，不是2017。** `scripts/12_test_shadow_burnscar_2017.py` 那个+32是拿从没用过的naive掩膜测的，作废(留作反面对照)。→ 完善2017见 `plan_2017_improvements.md` |
 | ★RBR | 2017 §4 把裸 **dNBR 换成 RBR**(相对化燃烧比, dNBR/(NBR_pre+1.001), 异质植被 SOTA, 修生物量偏差) | references.md C组 Parks2014 | ⏳2024 §4 主线就用 RBR(先在2024验)；2017 现用 dNBR(R²0.41-0.48) | ✅适合但要**重跑 §4 回归**、且可能牵动 §7 refugia 阈值(Key&Benson 是 dNBR 阈值, RBR 需重定)——等2024效果再决定值不值 |
-| ★SHAP | 2017 §5 变量重要性从**裸 Gini 升级成 SHAP**(方向+局部+交互) | references.md D组 Lundberg&Lee2017 | ⏳2024 §5 已定加(见对话) | ✅适合、纯增强、低成本：§5 现成 RF 模型直接套 `shap`，不改模型；直接强化"哪个 correlate 决定 refugia" |
+| ★SHAP | 2017 §5 变量重要性从**裸 Gini 升级成 SHAP**(方向+局部+交互) | references.md D组 Lundberg&Lee2017 | ✅**已在2017跑完**(`scripts/06d_shap_importance.py`)：`slope`是pasture专属头号特征(全局Gini排第7，分类别看排第1，被平均掉了)；`pre_B4`对pasture强正向、对其余3类负向。已写进report.md R5 | ✅完成 |
+| ★RBR | RBR vs dNBR 并列跑(见上，非二选一) | C组 Parks2014 | ✅**已在2017跑完**(`scripts/04f_rbr_regression.py`)：R²=0.304 vs dNBR的0.322，RBR没有改善，如实报告"测过没帮助"。已写进report.md R4 | ✅完成（结论=继续用dNBR） |
 
 **下一步**：2024那条线（§3-§5等效）先跑完看结果，回头再从这张表挑，挑完了才动
 report.md的§3/§4正文（英文句子还是你写）。
