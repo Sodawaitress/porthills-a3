@@ -259,7 +259,14 @@ cleared_pine点很可能有一批是烧痕）。Landsat CFMask通常比S2 SCL温
 - **变量重要性用 SHAP**（Lundberg&Lee 2017，已定加）：取代/补 Gini，给方向+局部+交互，
   直接回答"哪个 correlate 决定 refugia"——比 2017 的裸 Gini 升一级。
 - **（可选）XGBoost** 跟 RF 并排、报谁赢（战绩混合，别假设一定更好）。
-- **不做 DL/CNN**：表格+少样本，证明了不更好（Grinsztajn 2022），且丢可解释性。
+- **不做 DL/CNN（从零训练）**：表格+少样本，证明了不更好（Grinsztajn 2022），且丢可解释性。
+
+**A4 way-forward（已定 2026-09-21，见对话）**
+- **Google Satellite Embedding（AlphaEarth）当额外特征喂 RF**：GEE 现成 `GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL`，
+  64 维/10m/年嵌入"像波段一样"在点上采样，加进特征栈喂 RF。**专为稀疏标签设计**(5% 样本近饱和)，
+  编码整年物候 → 攻 gorse↔broadleaf(JM 最弱对)，是 F6 多时相的**免训练现成版**。**迁移学习当特征提取器
+  ≠ 从零训 DL**，不违背上面"不做 DL"。⚠️年度嵌入约 2017 起 → **2024 这条线(火前 2023 嵌入可用)比
+  2017(2016 没覆盖)更适用**，所以最先在 2024 试。引用见 references.md D 组 AlphaEarth。
 
 ## 清理记录（2026-09-21）
 - 删除 `07_finalize_cleared_pine_2024.py`（epoch不一致的bug版本，被11号取代，

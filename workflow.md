@@ -232,6 +232,7 @@ L8 把它拆成 **First pass（清离群/空值）** 和 **Second pass（正态/
 - **料**：训/验、可分性、精度全套在 A2 §5 已规划，见 `A2_提案骨架_非提交.md` §5 + `图像分类学习笔记.md` 步骤7/8/10。
 - **你要定 #3**：训/验怎么分？（A2 提过：70/30 或按面积比例 area-proportional；未烧类少→过采样；空间块划分避免自相关）
 - **术语对应（老师在讲 semantic / instance segmentation · 2026-09-21）**：你的 RF 全栅格分类图 = 一次**语义分割**（每像元贴类、不分个体）——报告可点名承接这个概念，但**不换深度学习版**（30m 尺度 + ~250 样本，CNN 会过拟合、丢可解释性、偏离 de Klerk 的 RF 母本；Grinsztajn 2022 证明表格数据树模型仍赢 DL）。**实例分割** = 单株树冠（DeepForest/SAM 等），你 0.2m 航片能做但对燃料/refugia 斑块尺度**过细** → 顶多当 A4 way-forward。**对象法 OBIA**（先分割成同质影像对象再分类）= 你 §5 "4d 像元 vs 对象" 那 2 分——可用老师的词汇论证你选像元、对象当备选。**变量重要性升级用 SHAP**（references D 组 Lundberg&Lee 2017），比裸 Gini 多给方向+局部+交互。
+- **DL-for-EO 讲座（Samantha Kumara · 2026-09-21）· 能白拿的分 + A4 方向**：① §5 "像元 vs 对象" 可直接引本课的 **"Pixel vs segment classification"** slide（课内引用最稳）；② §6 局限可套讲座 **"Common problems"** 类目——**云影**（=你 SCL 烧痕误判的教科书实例）/混合像元/分辨率/**类不平衡**(bare_rock、cleared_pine)/边界误差/**地理迁移**(=你 2017↔2024 复现正好在测)；③ **A4 way-forward = 用 Google Satellite Embedding（AlphaEarth, GEE 现成 64 维/年嵌入, references D 组）当额外特征喂 RF** 攻 gorse↔broadleaf(JM=1.46)——是 F6 多时相的**免训练现成版**、专为稀疏标签设计、不离开 GEE+RF、不违背"少样本别硬 train DL"（迁移学习当特征提取器 ≠ 从零训 DL）。⚠️年度嵌入约 2017 起 → 2024 火(火前 2023)比 2017 火(2016 没覆盖)更适用。
 
 ### 阶段 5 — 更新流程图（§6, 10分）🔲
 - **做什么**：把 A2 那张**计划图**改成**"我实际做了什么"图** + 加统计探索层 + 写 way forward（往 A4 最终分类+精度评估走）。

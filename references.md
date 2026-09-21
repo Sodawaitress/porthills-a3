@@ -61,6 +61,7 @@
 - **SHAP（可解释性 · 取代/补 Gini 变量重要性 · 给方向+局部+交互）** → **Lundberg, S.M.; Lee, S.-I. (2017)** *A Unified Approach to Interpreting Model Predictions.* NeurIPS 30。→ §5 变量重要性 + §4 "哪个 correlate 决定 refugia/严重度"；2024-25 火险/严重度制图的标准 XAI 工具。
 - **树集成 > 深度学习（表格数据 · justify 用 RF 不用 CNN）** → **Grinsztajn, L.; Oyallon, E.; Varoquaux, G. (2022)** *Why do tree-based models still outperform deep learning on tabular data?* NeurIPS 35 (Datasets & Benchmarks)。→ §5 为什么少样本表格数据用 RF/提升树而非深度学习。
 - **（可选）XGBoost（梯度提升 · RF 的对比模型）** → **Chen, T.; Guestrin, C. (2016)** *XGBoost: A Scalable Tree Boosting System.* KDD。→ §5 若加 RF vs 提升树并排对比。
+- **Google Satellite Embedding / AlphaEarth Foundations（预训练 EO 基础模型嵌入 · 当额外特征喂 RF · A4 方向）** → **Google DeepMind (2025)** *AlphaEarth Foundations: An embedding field model for accurate and efficient global mapping from sparse label data.* arXiv 2507.22291；GEE 数据集 `GOOGLE/SATELLITE_EMBEDDING/V1/ANNUAL`（64 维 / 10m / 年，"像波段一样"可在点上采样）。→ **A4 way-forward**：稀疏标签下嵌入喂 RF 标签效率极高（5% 样本近饱和），编码整年物候 → 攻 gorse↔broadleaf(JM=1.46)。⚠️年度嵌入约 2017 起 → 2024 火(火前 2023)比 2017 火(2016 没覆盖)更适用。
 
 ---
 
@@ -114,7 +115,7 @@
 | F3 | 变量重要性 = mean decrease in Gini 出处；另可加 **drop-one** 法 | E2 Solares / E3 Domingo | §5 | 补引用 + drop-one 可选新活 |
 | F4 | RF 过拟合反例(Domingo 拟合0.99/验证0.56) 对照本研究健康落差 | E3 Domingo2020 | §5 精度评论 | 补弹药 |
 | F5 | skew/kurt 当标准分布描述量的背书 | E2 Solares2023 Table3 | §3 正态性 | 补引用 |
-| F6 | 多时相/物候(逐月时序或年内合成)分 gorse↔broadleaf(JM=1.46 最弱对) | E2 Solares / E3 Domingo | §6 way forward | 新活但属 A4 |
+| F6 | 多时相/物候分 gorse↔broadleaf(JM=1.46 最弱对) → **具体工具 = Google Satellite Embedding**(AlphaEarth, GEE 现成 64 维/年嵌入, 采点喂 RF) | E2/E3 + AlphaEarth(D 组) | §6 / **A4 way-forward** | ✅**已定加进 A4**(2026-09-21)；免训练、稀疏标签设计、不离 GEE+RF |
 
 > ⚠️ E2/E3 都是同行评审文章、方法直接对口(ALS+S2 燃料分类)——可考虑当 Helen 要的"3 篇"或方法先例引；是否从 E 组升进 A 组，Yu 定。
 
