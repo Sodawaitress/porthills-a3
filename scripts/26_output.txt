@@ -1,0 +1,39 @@
+===== OFFICIAL MAP (ha) =====
+perimeter: 1758.8812495600898
+official unburnt: 114.8905171433696
+official burned: 1644.0150839113821
+
+===== COVERAGE =====
+pre-fire scenes: 10
+post-fire scenes: 5
+dNBR computable (ha): 1594.1029305908185
+coverage %: 90.63170486848553
+cloud gap (ha): 164.77706940918165
+
+===== OFFSET =====
+mean dNBR on unburned control (the offset): 120.45959258426059
+standard deviation: 74.23450983187682
+control area (ha): 1864.0534478470597
+
+===== THRESHOLD =====
+island dNBR p50/p90/p95: [-46.038393065853555, 117.52275294733387, 177.11571478243866]
+T: 117.52275294733387
+2 x control sd would give: 148.46901966375364
+commission error at T: 0.05834337879001484
+
+===== AREAS (ha), covered ground only =====
+covered: 1594.1029305908185
+burned: 1308.942641681243
+unburned: 278.9057755611884
+sensitivity T-50/T+50: 1384.8784316087203 1217.6700844135123
+burned rate %: 82.11155105248523
+scaled to the perimeter: 1444.2436491519522
+
+===== UNMAPPED REFUGIA =====
+my unburned total: 278.9057755611884
+inside the two official islands: 103.55800321569104
+NEW unmapped refugia (ha): 175.3477723454974
+scaled to the perimeter: 193.47288302690788
+
+===== VALIDATION (cross-check against PortHills2017_island_validation.csv) =====
+officially burned ground also called burned: 0.8809723854477558
