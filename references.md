@@ -47,6 +47,7 @@
 
 ## C. 指数/方法标准引用
 - NDVI → Rouse et al. (1974) · NBR/dNBR → Key & Benson (2006) · NDWI → McFeeters (1996) · NDRE → Barnes et al. (2000)
+- **RBR（相对化燃烧比 · 异质植被 SOTA 严重度度量）** → **Parks, S.A.; Dillon, G.K.; Miller, C. (2014)** *A New Metric for Quantifying Burn Severity: The Relativized Burn Ratio.* Remote Sensing 6(3), 1827–1844. DOI 10.3390/rs6031827。公式 `RBR = dNBR / (NBR_pre + 1.001)`；实测优于 dNBR/RdNBR（R² 0.786>0.761>0.766），修正 dNBR 被火前生物量绑架的偏差——A3 §4 用作连续 Y（主线回归）。RdNBR 前身 → Miller & Thode (2007)。
 
 ---
 
@@ -57,6 +58,9 @@
 - **JM 可分性 / 图像分类** → Richards, J.A. (2013) *Remote Sensing Digital Image Analysis* (Springer)。⏳ 核版次/页。
 - **gorse 卫星制图（花期黄）** → 08 脚本引 "Satellite mapping of gorse at regional scales"（researchgate 230694091）⏳ 补确切作者年份再用。
 - **Cohen's d（效应量）** → Cohen, J. (1988) *Statistical Power Analysis for the Behavioral Sciences.* → 用于报告红边/花期分离度描述。
+- **SHAP（可解释性 · 取代/补 Gini 变量重要性 · 给方向+局部+交互）** → **Lundberg, S.M.; Lee, S.-I. (2017)** *A Unified Approach to Interpreting Model Predictions.* NeurIPS 30。→ §5 变量重要性 + §4 "哪个 correlate 决定 refugia/严重度"；2024-25 火险/严重度制图的标准 XAI 工具。
+- **树集成 > 深度学习（表格数据 · justify 用 RF 不用 CNN）** → **Grinsztajn, L.; Oyallon, E.; Varoquaux, G. (2022)** *Why do tree-based models still outperform deep learning on tabular data?* NeurIPS 35 (Datasets & Benchmarks)。→ §5 为什么少样本表格数据用 RF/提升树而非深度学习。
+- **（可选）XGBoost（梯度提升 · RF 的对比模型）** → **Chen, T.; Guestrin, C. (2016)** *XGBoost: A Scalable Tree Boosting System.* KDD。→ §5 若加 RF vs 提升树并排对比。
 
 ---
 

@@ -243,14 +243,23 @@ cleared_pine点很可能有一批是烧痕）。Landsat CFMask通常比S2 SCL温
 
 ---
 
-## 还没做的（跟2017对齐的下一批：§4-§5）
-- §4 关系（相关表+VIF、dNBR回归——这次dNBR/火后波段还没采样，也可以直接把
-  Spearman(F1)并进去一起跑，不用像2017分两次）
-- §5 分类（JM可分性 → RF，cleared_pine这次更连片，或许能直接进分类器）
-- §4 关系（相关表/VIF清理 → dNBR回归）—— 2024这次dNBR/火后波段还没采样，
-  需要先决定Y变量怎么来（跟2017一样用dNBR连续值，还是这次有别的想法）
-- §5 分类（JM可分性 → RF → 混淆矩阵）——这次cleared_pine更连片(7块非2017的
-  4块)，见第7步笔记，或许能直接进分类器训练，不用只当掩膜
+## 还没做的（§4-§5 · 计划已定 2026-09-21，见对话里的 Y 变量研究）
+
+**§4 关系（Y 变量已定）**
+- 主线 = **RBR 连续回归**（不是裸 dNBR）：`RBR = dNBR/(NBR_pre+1.001)`，Parks 2014，
+  异质植被 SOTA，修正 dNBR 被火前生物量绑架的偏差（cleared_pine 这种低生物量类尤其受益）。
+  火后波段已采（第14步 243/243），RBR 直接从 NBR_pre/NBR_post 算，不用再跑 GEE。
+- 副线 = **二值逻辑回归**（burned/unburned = refugia）：呼应科学问题 + de Klerk 母本
+  Christ 2025（refugia 当二值预测）。两个 Y 各答一层（"烧多重" vs "烧不烧"）。
+- 相关表 **Pearson + Spearman(F1) 并排**（Spearman 不要求正态，一次到位）；VIF 清理。
+
+**§5 分类**
+- JM 可分性 → **RF**（主；Grinsztajn 2022 背书：少样本表格数据树模型仍赢 DL）；cleared_pine
+  这次更连片(7块)，或许能直接进分类器（2017 只能当掩膜）；混淆矩阵 OA/Kappa/PA/UA。
+- **变量重要性用 SHAP**（Lundberg&Lee 2017，已定加）：取代/补 Gini，给方向+局部+交互，
+  直接回答"哪个 correlate 决定 refugia"——比 2017 的裸 Gini 升一级。
+- **（可选）XGBoost** 跟 RF 并排、报谁赢（战绩混合，别假设一定更好）。
+- **不做 DL/CNN**：表格+少样本，证明了不更好（Grinsztajn 2022），且丢可解释性。
 
 ## 清理记录（2026-09-21）
 - 删除 `07_finalize_cleared_pine_2024.py`（epoch不一致的bug版本，被11号取代，
