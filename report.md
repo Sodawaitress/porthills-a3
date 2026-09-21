@@ -206,6 +206,13 @@
 
 ### R7 地图（4分 · 喂：US6/US7/US9）
 - 高质量**分类图** + **refugia 图**；每图查 6 要素（title/legend/scale/north/inset/source+EPSG:2193）。
+- ⭐ 已做（`scripts/27_build_severity_raster.py` + `scripts/28_build_final_maps.py`，真·ArcGIS Pro
+  Layout，不是matplotlib画的）：两张图都存进了`PortHills2017.aprx`本体(新增2个Map+2个Layout，
+  没动原有的)，导出`exploration/Map1_FuelClass_2017.png`(4类燃料分类+火场边界+定位图+比例尺+
+  指北针+图例)、`exploration/Map2_Refugia_2017.png`(severity 4级，unburned=green=refugia)。
+  **还差**：图例条目有个小重复(ArcGIS默认行为，机房GUI里10秒能关掉)；标题+来源说明这2个文字框
+  没能用脚本加(这版ArcGIS Pro的arcpy.mp没有`createTextElement`方法，查过不是漏用，是真没有)，
+  留给Yu在Pro里手动加，文字内容28号脚本运行时已经打印出来，直接复制。
 
 ### R8 时间线（4分 · 喂：US10）
 - 更新到 **A4 最终报告 + oral**，每周做什么。
