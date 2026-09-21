@@ -1,141 +1,84 @@
 """
-Port of A1's PortHills_dNBR (00_A1_PortHills_dNBR.js) to Python, purely to
-EXPORT the visualisation layers as static PNGs for report.md - A1's own
-logic is not changed, just re-run in Python so getThumbURL can save files
-(the JS Code Editor only shows layers on screen, doesn't save them).
+Export A1's visualisation panels as static PNGs - LOCAL version, no GEE.
 
-Also builds the 2017 equivalent of 2024's 23_truecolor_burn_vs_cloud.py:
-true colour + "how often does QA_PIXEL flag this pixel as cloud shadow"
-frequency map, side by side - the visual case for why bit4 (shadow) had to
-be restricted to outside the fire perimeter.
+Corrected after the other machine pointed out the obvious: A1 already
+exported PortHills2017_stack.tif (22 bands) to
+C:\\Users\\zhouy3d\\Desktop\\PortHills\\data\\PortHills2017_stack.tif, and
+the rest of the 2017 pipeline already reads this file locally via arcpy.
+Re-deriving everything from GEE in Python (the first version of this
+script) was needless.
 
-Run on the GEE-authenticated machine: python 24_A1_export_figures.py
+Band order (from 00_A1_PortHills_dNBR.js's export comment, 1-indexed):
+1-6 pre_B2..B7, 7-12 post_B2..B7, 13 NBR_pre, 14 NBR_post, 15 dNBR,
+16 NDVI, 17 BSI, 18 severity, 19 valid_data, 20 elev, 21 slope, 22 northness
 
 Author: Claude (for Yu Zhou), 2026-09-21
 """
-import ee
-import os
-import io
-import csv
-import urllib.request
+import arcpy
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import Image
+import os
 
-ee.Initialize(project='genuine-hold-427410-f0')
-HERE = os.path.dirname(os.path.abspath(__file__))
-OUT_DIR = os.path.join(HERE, "..", "exploration")
+STACK = r"C:\Users\zhouy3d\Desktop\PortHills\data\PortHills2017_stack.tif"
+OUT_DIR = r"C:\Users\zhouy3d\Desktop\a3\exploration"
 os.makedirs(OUT_DIR, exist_ok=True)
 
-# ---- 1. AOI (same asset A1 used) ----
-ASSET_ID = 'projects/genuine-hold-427410-f0/assets/Port_Hills_2017_Fire_Boundary'
-raw = ee.FeatureCollection(ASSET_ID)
-fireWithHoles = raw.filter(ee.Filter.eq('Type', 'Fire Boundary')).first().geometry()
-unburntFC = raw.filter(ee.Filter.eq('Type', 'Unburnt'))
-aoi = fireWithHoles.union(unburntFC.geometry(), 1)
-wideFrame = aoi.buffer(4000)
-mapFrame = aoi.buffer(500)
-
-preStart, preEnd = '2016-12-01', '2017-02-11'
-postStart, postEnd = '2017-02-24', '2017-03-30'
-outputBands = ['SR_B2', 'SR_B3', 'SR_B4', 'SR_B5', 'SR_B6', 'SR_B7']
+arr = arcpy.RasterToNumPyArray(STACK, nodata_to_value=np.nan)  # (22, rows, cols)
 
 
-def scaleSR(image):
-    return (image.select('SR_B.').multiply(0.0000275).add(-0.2)
-            .copyProperties(image, ['system:time_start']))
+def b(n):
+    """1-indexed band -> 2D array."""
+    return arr[n - 1]
 
 
-def maskL8clouds_QA(image):
-    qa = image.select('QA_PIXEL')
-    inFire = ee.Image.constant(1).clip(aoi).mask()
-    bad = (qa.bitwiseAnd(1 << 3).neq(0)
-           .Or(qa.bitwiseAnd(1 << 4).neq(0).And(inFire.Not())))
-    return ee.Image(scaleSR(image)).updateMask(bad.Not())
+def stretch_rgb(idx_1based):
+    chans = []
+    for n in idx_1based:
+        a = b(n)
+        lo, hi = np.nanpercentile(a, [2, 98])
+        chans.append(np.clip((a - lo) / (hi - lo + 1e-9), 0, 1))
+    return np.dstack(chans)
 
 
-l8 = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2').filterBounds(wideFrame)
-preCol = l8.filterDate(preStart, preEnd).map(maskL8clouds_QA)
-postCol = l8.filterDate(postStart, postEnd).map(maskL8clouds_QA)
-pre = preCol.select(outputBands).median().clip(mapFrame)
-post = postCol.select(outputBands).median().clip(mapFrame)
-
-ndviPre = pre.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI')
-bsi = pre.expression(
-    '((RED + SWIR) - (NIR + BLUE)) / ((RED + SWIR) + (NIR + BLUE))',
-    {'RED': pre.select('SR_B4'), 'SWIR': pre.select('SR_B6'),
-     'NIR': pre.select('SR_B5'), 'BLUE': pre.select('SR_B2')}).rename('BSI')
-
-nbrPre = pre.normalizedDifference(['SR_B5', 'SR_B7'])
-nbrPost = post.normalizedDifference(['SR_B5', 'SR_B7'])
-dnbrRaw = nbrPre.subtract(nbrPost).multiply(1000)
-# NOTE: this script exports figures only, it does NOT re-derive the offset/
-# threshold (those need the full AOI-wide reduceRegion the JS version does,
-# not worth duplicating here) - dnbrRaw (uncorrected) is fine for a visual.
-
-DIM = 900
-
-
-def fetch(img, vis):
-    url = img.getThumbURL({'region': mapFrame, 'dimensions': DIM, 'format': 'png', **vis})
-    return np.array(Image.open(io.BytesIO(urllib.request.urlopen(url).read())))
-
-
-print("Fetching A1 visualisation layers...")
 panels = {
-    "1_natural_colour_pre": (pre, {'bands': ['SR_B4', 'SR_B3', 'SR_B2'], 'min': 0, 'max': 0.3}),
-    "2_natural_colour_post": (post, {'bands': ['SR_B4', 'SR_B3', 'SR_B2'], 'min': 0, 'max': 0.3}),
-    "3_cir_pre": (pre, {'bands': ['SR_B5', 'SR_B4', 'SR_B3'], 'min': 0, 'max': 0.4}),
-    "4_burn_swir_post": (post, {'bands': ['SR_B7', 'SR_B5', 'SR_B4'], 'min': 0, 'max': 0.4}),
-    "5_ndvi_pre": (ndviPre, {'min': -0.2, 'max': 0.8,
-                              'palette': ['blue', 'white', 'yellow', 'green', 'darkgreen']}),
-    "6_bsi": (bsi, {'min': -0.5, 'max': 0.5,
-                     'palette': ['darkgreen', 'yellow', 'orange', 'brown', 'white']}),
-    "7_dnbr_raw": (dnbrRaw, {'min': -200, 'max': 800,
-                              'palette': ['2c7bb6', 'ffffbf', 'd7191c']}),
+    "natural_colour_pre":  [3, 2, 1],     # pre_B4,B3,B2
+    "natural_colour_post": [9, 8, 7],     # post_B4,B3,B2
+    "cir_pre":             [4, 3, 2],     # pre_B5,B4,B3
+    "burn_swir_post":      [12, 10, 9],   # post_B7,B5,B4
 }
 
-fig, axes = plt.subplots(3, 3, figsize=(18, 16))
-for ax, (name, (img, vis)) in zip(axes.flat, panels.items()):
-    arr = fetch(img, vis)
-    ax.imshow(arr)
+fig, axes = plt.subplots(2, 3, figsize=(16, 10))
+for ax, (name, idx) in zip(axes.flat, panels.items()):
+    ax.imshow(stretch_rgb(idx))
     ax.set_title(name)
     ax.axis("off")
-for ax in axes.flat[len(panels):]:
-    ax.axis("off")
+
+im = axes.flat[4].imshow(b(16), cmap="RdYlGn", vmin=-0.2, vmax=0.8)
+axes.flat[4].set_title("NDVI (pre-fire)")
+axes.flat[4].axis("off")
+plt.colorbar(im, ax=axes.flat[4], fraction=0.046)
+
+im2 = axes.flat[5].imshow(b(15), cmap="RdYlBu_r", vmin=-200, vmax=800)
+axes.flat[5].set_title("dNBR (raw, A1 stack)")
+axes.flat[5].axis("off")
+plt.colorbar(im2, ax=axes.flat[5], fraction=0.046)
+
 plt.tight_layout()
 out1 = os.path.join(OUT_DIR, "A1_visualisation_panels.png")
-plt.savefig(out1, dpi=110)
+plt.savefig(out1, dpi=120)
 print("Wrote", out1)
 
-# ---- 2. true-colour + "how often is this pixel flagged shadow" frequency ----
-# 2017 equivalent of 2024's 23_truecolor_burn_vs_cloud.py, using QA_PIXEL
-# bit4 instead of Sentinel-2 SCL==3
-post_scenes = l8.filterDate(postStart, postEnd)
-least_cloudy = post_scenes.sort('CLOUD_COVER').first()
-date = ee.Date(least_cloudy.get('system:time_start')).format('YYYY-MM-dd').getInfo()
-cc = least_cloudy.get('CLOUD_COVER').getInfo()
-print(f"Least-cloudy post-fire Landsat scene: {date} (scene cloud {cc:.1f}%)")
+fig2, ax2 = plt.subplots(figsize=(8, 7))
+im3 = ax2.imshow(b(17), cmap="YlOrBr", vmin=-0.5, vmax=0.5)
+ax2.set_title("BSI (Bare Soil Index, pre-fire)")
+ax2.axis("off")
+plt.colorbar(im3, ax=ax2, fraction=0.046)
+out_bsi = os.path.join(OUT_DIR, "A1_bsi.png")
+plt.savefig(out_bsi, dpi=120)
+print("Wrote", out_bsi)
 
-tc_img = ee.Image(scaleSR(least_cloudy)).select(['SR_B4', 'SR_B3', 'SR_B2']).clip(mapFrame)
-tc = fetch(tc_img, {'min': 0, 'max': 0.30})
-
-shadow_freq = post_scenes.map(
-    lambda im: im.select('QA_PIXEL').bitwiseAnd(1 << 4).neq(0)
-).mean().clip(mapFrame)
-freq = fetch(shadow_freq, {'min': 0, 'max': 1,
-                            'palette': ['000044', '0000ff', '00ffff', 'ffff00', 'ff0000']})
-
-fig, ax = plt.subplots(1, 2, figsize=(15, 7))
-ax[0].imshow(tc)
-ax[0].set_title(f"True colour, post-fire {date}\n(burn scars = dark, cloud = white)")
-ax[0].axis("off")
-ax[1].imshow(freq)
-ax[1].set_title('How often QA_PIXEL bit4 calls each pixel "cloud shadow"\n'
-                 '(whole post-fire window; hot/red = repeatedly flagged)\n'
-                 'fire perimeter outline should sit on the hot zone if the fix is justified')
-ax[1].axis("off")
-plt.tight_layout()
-out2 = os.path.join(OUT_DIR, "A1_truecolor_burn_vs_shadow_2017.png")
-plt.savefig(out2, dpi=110)
-print("Wrote", out2)
+print("\nNOTE: the true-colour + shadow-frequency figure (how often each "
+      "scene gets flagged shadow) still needs the raw per-scene Landsat "
+      "collection, not this composited stack - that part still needs GEE, "
+      "see the bottom half of the previous version of this script / adapt "
+      "2024's 23_truecolor_burn_vs_cloud.py with QA_PIXEL bit4.")
