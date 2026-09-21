@@ -23,26 +23,43 @@ AOI = ee.Geometry.Rectangle([172.55, -43.65, 172.67, -43.56])
 # same windows as 02_dNBR_2024_clip_and_refugia.js (the severity map this
 # project already treats as ground truth for refugia) - keep dNBR at the
 # points consistent with the dNBR raster already produced
-PRE_START, PRE_END = '2024-01-10', '2024-02-13'
+# pre window widened to 2023-12-01 to match 15 (still pre-fire summer, veg stable;
+# the tight 2024-01-10 window only had 2 scenes -> 65 pts fell in pre-fire cloud
+# holes even with the full mask). Post window unchanged (= severity map).
+PRE_START, PRE_END = '2023-12-01', '2024-02-13'
 POST_START, POST_END = '2024-02-20', '2024-03-31'
 
 
-def mask_s2(img):
+def mask_full(img):
+    # pre-fire: no burn scars yet, so mask cloud shadow (3) + snow (11) too
     scl = img.select('SCL')
     mask = (scl.neq(3).And(scl.neq(8)).And(scl.neq(9))
             .And(scl.neq(10)).And(scl.neq(11)))
     return img.updateMask(mask).divide(10000)
 
 
-def get_composite(start, end, cloud_pct):
+def mask_clouds_only(img):
+    # post-fire: SCL flags dark BURN SCARS as cloud shadow (class 3) and masks
+    # them, so the tight-window mask dropped 126/243 points - the MOST burned
+    # ones (pasture 12/47 etc). Widening the window recovered 0 (22b: only added
+    # -142 regrowth bias). Root cause proven in 22c: keeping class 3 recovers +65
+    # points (117->182), no time bias. So post-fire we mask only real clouds
+    # 8/9/10 and KEEP shadow (= burn scars). Occasional true shadow that slips
+    # through is diluted by the multi-scene median. See workflow.md method record.
+    scl = img.select('SCL')
+    mask = scl.neq(8).And(scl.neq(9)).And(scl.neq(10))
+    return img.updateMask(mask).divide(10000)
+
+
+def get_composite(start, end, cloud_pct, maskfn):
     return (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
             .filterBounds(AOI).filterDate(start, end)
             .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', cloud_pct))
-            .map(mask_s2).median().clip(AOI))
+            .map(maskfn).median().clip(AOI))
 
 
-pre_img = get_composite(PRE_START, PRE_END, 40)
-post_img = get_composite(POST_START, POST_END, 60)
+pre_img = get_composite(PRE_START, PRE_END, 40, mask_full)
+post_img = get_composite(POST_START, POST_END, 60, mask_clouds_only)
 
 pre_nbr = pre_img.normalizedDifference(['B8', 'B12']).rename('NBR_pre')
 post_nbr = post_img.normalizedDifference(['B8', 'B12']).rename('NBR_post')
