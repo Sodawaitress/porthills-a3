@@ -61,8 +61,10 @@ GEE 负责**算 + 出底图影像**，ArcGIS Pro 负责**排版加 6 要素**。
 1. 栅格/矢量加进 Map，坐标系设 **EPSG:2193 (NZTM)**。
 2. 新建 **Layout**，摆上 §2 的 6 要素。
 3. 版面按老师反馈排（见 §4）。
-4. 半自动脚本参考：`A3/scripts/27_build_severity_raster.py` + `28_build_final_maps.py`
-   （arcpy.mp 能加大部分要素；**标题/来源两个文字框要手动加**——这版 arcpy.mp 没有 `createTextElement` 方法，文字内容 28 号脚本跑时已打印，复制即可）。
+4. 全自动脚本参考：`A3/scripts/44_build_all_maps.py`（重建所有 Layout，标题/来源文字全脚本生成）、
+   `45_build_cleaning_map.py`（Map3 清洗图）、`27_build_severity_raster.py`（severity 栅格）。
+   - ✅ **标题/来源文字框能用脚本加**：ArcGIS Pro 3.6.1 的 `createTextElement` 挂在 **project** 对象上(不是 layout)：
+     `p.createTextElement(layout, point, "POINT", text, size, font, style, None, name)`。44 号脚本里所有标题+来源都是脚本打的，没手打一个字。
 5. 导出 **File → Export Layout**，四周**留白别贴边**。
 
 ---

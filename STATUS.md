@@ -27,11 +27,13 @@ A3 分析全部做完，**主模型定为 S+Sp**。报告 docx 已修好格式 +
 - `figures/fig_workflow_A3.gv` + `.png`（含 §3 统计层、§4 关系、S+Sp、cleared_pine 掩膜；A2 原图没动）
 - `figures/A3_timeline.png`（源 `scripts/A3_timeline_ggplot.R`；A3 里程碑 09-27，含 today 线）
 
-## ArcGIS 地图（前几次做的）
-- 已导出：`exploration/Map1_FuelClass_2017.png`、`exploration/Map2_Refugia_2017.png`
-- S+Sp 版：`figures/Fig5_8_class_map_SSp_masked.png`（分类图）、`figures/Fig5_7_confusion_SSp.png`（混淆矩阵）
-- ⚠️ ArcGIS 工程 `PortHills2017.aprx` **只在原机器、不在 git**（aprx 是绝对路径，跨机打不开）
-- 待办（下午在 Pro 手动做）：图例去掉重复项、加标题 + 来源文字框（arcpy 的 arcpy.mp 加不了，文字内容 `scripts/28_build_final_maps.py` 跑时已打印，见 `report.md` R7）
+## ArcGIS 地图 ✅ 已定稿（2026-09-26）
+- **三张最终图**在 `exploration/map_final/`：Map1 燃料分类(V2)、Map2 烧毁程度+refugia、Map3 30m格清洗；变体在 `exploration/map_variants/`
+- 脚本：`scripts/44_build_all_maps.py`(全自动重建所有 Layout) + `45_build_cleaning_map.py`(Map3)
+- 全部按老师布局反馈排(主图左、inset/图例/比例尺/N 竖排右侧左对齐)，三张风格统一
+- **跨机找文件看 [`WHERE_IS_EVERYTHING.md`](WHERE_IS_EVERYTHING.md)**（aprx/gdb/大文件在 OneDrive，git 只有 PNG）
+- ⚠️ 更正：旧稿"arcpy.mp 没有 `createTextElement`"是**错的**——3.6.1 有，挂 project 对象上；44 号脚本标题/来源全自动生成
+- 剩：Map1 定稿选 V3_Confidence / V2_CVDsafe；图题写进 Word（图下方，"Figure X" 加粗）
 
 ## 不在 git 的东西（都要另传）
 `*.tif`（`PortHills2017_stackA3.tif`、`figures/*.tif`…）、`*.zip`（`classification.zip`、`R5.zip` 内含最终表/图）、`*.pdf`、`*.docx` —— 全被 .gitignore，需 OneDrive/U 盘另传。

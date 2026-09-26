@@ -231,9 +231,11 @@
   Layout，不是matplotlib画的）：两张图都存进了`PortHills2017.aprx`本体(新增2个Map+2个Layout，
   没动原有的)，导出`exploration/Map1_FuelClass_2017.png`(4类燃料分类+火场边界+定位图+比例尺+
   指北针+图例)、`exploration/Map2_Refugia_2017.png`(severity 4级，unburned=green=refugia)。
-  **还差**：图例条目有个小重复(ArcGIS默认行为，机房GUI里10秒能关掉)；标题+来源说明这2个文字框
-  没能用脚本加(这版ArcGIS Pro的arcpy.mp没有`createTextElement`方法，查过不是漏用，是真没有)，
-  留给Yu在Pro里手动加，文字内容28号脚本运行时已经打印出来，直接复制。
+- ✅ **地图已定稿(2026-09-26)**：`scripts/44_build_all_maps.py`(全自动重建所有 Layout) + `45_build_cleaning_map.py`(Map3)。
+  三张最终图导出在 `exploration/map_final/`：**Map1 燃料分类**(V2)、**Map2 烧毁程度+refugia**、**Map3 30m格清洗**，
+  变体在 `exploration/map_variants/`。全部按老师布局反馈排(主图左、inset/图例/比例尺/N 竖排右侧)，三张风格统一。
+  ⚠️ **更正**：旧稿说"这版 arcpy.mp 没有 `createTextElement`"是**错的**——3.6.1 有，挂在 project 对象上
+  (`p.createTextElement(layout, point, "POINT", text, …)`)，44 号脚本里标题/来源全是脚本生成的，没手打。
 - ⭐ **地图制作指南(照抄用，详见 [`map_making_guide.md`](map_making_guide.md))**：整合了 ①A2 rubric 的
   Map Requirements(6 要素 + Symbology/Font/Visual Hierarchy) + Helen A1 图件反馈(caption stand-alone、
   inset 只第一张、指北针各图一致) ②我的做图两条路(GEE 出底图 / ArcGIS Pro 排版) ③老师对布局的反馈
