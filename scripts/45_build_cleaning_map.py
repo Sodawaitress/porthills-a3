@@ -21,10 +21,9 @@ PERIM = BASE + r"\data\Port_Hills_2017_Fire_Boundary.shp"
 EXT_REF = os.path.join(GDB, "FuelClass_SSp_masked")      # Map 1's AOI extent
 OUT   = r"C:\Users\zhouy3d\Desktop\a3\exploration\map_variants"
 
-# cleaning_mask was built on the school machine in 2017PortHillsA3.gdb
+# cleaning_mask was built on the school machine in 2017PortHillsA3.gdb (moved into this folder)
 # (values 1-5, see CLEAN_CLASSES); it is copied into the main gdb once
-CLEAN_SRC = (r"C:\Users\zhouy3d\OneDrive - Lincoln University\Lincoln University"
-             r"\ERST619\PortHills\PortHills2017\2017PortHillsA3.gdb\cleaning_mask")
+CLEAN_SRC = BASE + r"\PortHills2017\2017PortHillsA3.gdb\cleaning_mask"
 CLEAN = os.path.join(GDB, "Cleaning_Mask_2017")
 
 BASEMAP = "NZ Light Grey Canvas (Vector)"

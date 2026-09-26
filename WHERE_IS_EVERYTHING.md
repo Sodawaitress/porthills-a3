@@ -1,7 +1,7 @@
 # 东西都在哪 · 跨机器找文件指南
 
 > 目的：**万一登不上学校那台 Windows（RDP）电脑，也能找到东西、改东西、交作业。**
-> 更新：2026-09-26（做完 A3 §7 两张地图之后）
+> 更新：2026-09-26 晚（整理成只有两份工程之后）
 
 ---
 
@@ -27,13 +27,31 @@
 
 ---
 
-## 2. OneDrive 里的三份 PortHills（别搞混）
+## 2. ArcGIS 工程只有两份（2026-09-26 晚整理后）
 
-| 文件夹 | 时间 | 是什么 |
-|---|---|---|
-| `ERST619\PortHills_2026-09-26_maps\` | **2026-09-26（最新）** | **做完 §7 两张地图之后的完整工程**，要用就用这份 |
-| `ERST619\PortHills_full_backup\` | 2026-09-21 | 改地图**之前**的快照。万一新版哪里坏了，回退到这份 |
-| `Lincoln University\ERST619\PortHills\` | 2026-09-23 | 学校机器上另开的 `a3\2017PortHillsA3.aprx`（"Data cleaning Mask" 那张图在里面）。**注意：它的图层全是断的**，源指向空的 `2017PortHillsA3.gdb`，`PortHills2017_stackA3.tif` 实际在 `a3\` 子目录而不是父目录，图层 `edge_mix` 指向的数据集名拼成了 `dege_mix`。要用得先重连路径 |
+| 文件夹 | 是什么 |
+|---|---|
+| **`Desktop\PortHills\`** | **唯一的工作副本**。在 Pro 里打开、改图都用这份；脚本 44/45/46/47 都指向它 |
+| **`OneDrive\ERST619\PortHills_A3_FINAL\`** | 工作副本的镜像 + 备份（改完同步过来，再跑 47 号脚本把路径指回它自己）。另有 `map_final\`（最终交的 3 张图）、`map_exports\`（所有版本）、`_from_other_machine\`（别的机器传来的两个空壳 aprx，火势分期数据不在这台机器上，里面 5 个图层永远是断的，别用） |
+
+两份里各有 3 个工程，全部图层检查过、**零断链**：
+`PortHills2017\PortHills2017.aprx`（主工程，所有 Map 1/2/3 布局）、
+`PortHills2017\a3\2017PortHillsA3.aprx`（学校机器上做的 Data cleaning Mask，数据 `2017PortHillsA3.gdb` / `a3\PortHills2017_stackA3.tif` 已搬进来）、
+`PortHills2017\a2\a2map1\output\map1\map1.aprx`（A2）。
+备份 aprx 都在 `PortHills2017\_aprx_backups\`。
+
+旧的 `PortHills_full_backup\`（09-21）、`Lincoln University\ERST619\PortHills\`（09-19 原始版）、`Desktop\a2map1\` 里的东西都已并进工作副本（旧版 215 点存档为 `TrainingPoints_raw_OLD_0919_215pts`），**已无用，可删**。
+
+## 2b. 图层又断了 / 数据丢了怎么办
+
+**原因**：aprx 存的是数据的完整路径。工程或数据被复制、挪动、换机器，路径就对不上。
+**规矩**：①所有数据只放在工程文件夹里面；②只整个文件夹一起复制，绝不单独拷 aprx；③换机器用 Pro 的 *Share → Project Package*（打包带数据）。
+**修**：关掉 Pro，跑
+```
+"C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" scripts\47_check_fix_project.py [文件夹]
+```
+它会逐个图层检查，断的自动在文件夹里按名字找回来重连（包括 Extract Bands 这种栅格函数图层），最后报告还缺什么。加 `--dry` 只检查不改。
+**Pro 里手动修**：图层上的红色感叹号 → 点它 → 选到数据所在位置。
 
 ---
 
@@ -41,7 +59,7 @@
 
 ### 工程文件
 `PortHills2017\PortHills2017.aprx`
-备份副本：同目录下 `PortHills2017_backup_2026-09-26_maps.aprx`
+备份副本：`PortHills2017\_aprx_backups\`
 
 ### 里面的 Layout
 
@@ -105,7 +123,7 @@
 - **`map_making_guide.md` §3 路B 第 4 条写错了**：它说"这版 ArcGIS Pro 的 arcpy.mp 没有 `createTextElement` 方法，标题/来源文字框要手动加"。实际 3.6.1 **有**，只是挂在 **project** 对象上不是 layout 上：
   `p.createTextElement(layout, point, "POINT", text, size, font, style, None, name)`
   `44_build_all_maps.py` 里所有标题和来源文字都是脚本生成的，没手打一个字。`report.md` R7 和 `STATUS.md` 里也有同样这句错话，一起改掉。
-- **原有 `Map` 里有 3 个图层报断链**：`severity.tif` / `dNBR.tif` / `Extract Bands_stack_fire.tif`，都指向 `data\stack_fire.tif`。那个 tif 文件是在的（1.9 MB，`arcpy.Exists` 为 True），这三个是**栅格函数图层**（on-the-fly 函数链），arcpy 在无界面下常把这类层报成 broken，在 Pro 界面里不一定真坏。**本次两张地图不依赖它们**（用的是 gdb 里已固化的 `Severity_2017_map_clipped`）。在 Pro 里打开 `Map` 看一眼确认；真坏了就重跑 `scripts/27_build_severity_raster.py`，或从 `PortHills_full_backup`（9/21 那份）取回。
+- ~~原有 `Map` 里 3 个栅格函数图层报断链~~：**已修**（2026-09-26 晚，47 号脚本把它们 XML 里的相对路径改成了绝对路径）。
 - **底图版权文字印在主图里**（"Eagle Technology, LINZ, StatsNZ, NIWA…"）。图层和地图两级的 `attribution` 都清空了，矢量切片底图仍在绘制时自己画出来。要彻底去掉只能不要底图，代价是丢掉 Halswell / Lansdowne / Governors Bay 这些地名。
 - **`2024_materials/`** 在 `Desktop\a3\` 里但没被 git 跟踪。2024 年火灾的复现工作当初是**故意**移出这个 repo 的（commit `ad0d454`，"A3 = pure 2017"）。要留就单独处理，别顺手 commit 进来。
 
