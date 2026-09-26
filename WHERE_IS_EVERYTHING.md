@@ -53,6 +53,7 @@
 | `V2_CVDsafe` | Map 1，Okabe-Ito 色盲安全配色 |
 | `V4_Terrain` | Map 1，叠 1m LiDAR 山体阴影 |
 | **`Map2_Refugia`** | **Map 2**：烧毁程度 4 级 + refugia |
+| **`Map3_DataCleaning`** | **Map 3**：30 m 格子的空间清洗标记（= `figures/A3_0_spatial_cleaning_funnel.png` 的空间版），`scripts/45_build_cleaning_map.py` 生成 |
 | `Layout` `Layout1` `A3_DataCheck_Layout` `FuelClass_Layout_2017` `Refugia_Layout_2017` | 以前做的，**没动过** |
 
 导出的 PNG（在 git 里）+ PDF（只在 OneDrive）：
@@ -73,6 +74,7 @@
 | `data\Port_Hills_2017_Fire_Boundary.shp` | 工程 data 目录 |
 | `data\CanterburyRegion.shp` | 从学校 `J:\Data\Administrative_Boundaries\` 拷来的（定位小图用） |
 | `PortHills2017\a3\raster\PortHills_HS1m_LiDAR.tif` | 工程里（只有 V4 用） |
+| `PortHills2017.gdb\Cleaning_Mask_2017` | 45 号脚本从 `Lincoln University\ERST619\PortHills\PortHills2017\2017PortHillsA3.gdb\cleaning_mask` 复制过来（值 1–5） |
 
 ---
 
