@@ -234,11 +234,11 @@
   **还差**：图例条目有个小重复(ArcGIS默认行为，机房GUI里10秒能关掉)；标题+来源说明这2个文字框
   没能用脚本加(这版ArcGIS Pro的arcpy.mp没有`createTextElement`方法，查过不是漏用，是真没有)，
   留给Yu在Pro里手动加，文字内容28号脚本运行时已经打印出来，直接复制。
-- ⭐ **老师对 A3 地图的反馈(A4 照这个重排，详见 [`map_layout_notes.md`](map_layout_notes.md))**：
-  主图挪到**左边**占最大块 → 右侧**竖排**放 inset 定位图 / N 指北针 / 图例 / 比例尺，全部**左对齐**；
-  并修掉"inset/图例/比例尺**左边被裁掉一点**"的问题(Pro 里用 Guides 拉参考线对齐 + 留够页边距)。
-  这条正好把 R7 的排版从"6 要素齐不齐"升级到"**要素怎么摆才好看**"——布局笔记里有 ASCII 草图、配色和
-  ArcGIS 操作步骤，是 A4 way forward 的一部分。
+- ⭐ **地图制作指南(照抄用，详见 [`map_making_guide.md`](map_making_guide.md))**：整合了 ①A2 rubric 的
+  Map Requirements(6 要素 + Symbology/Font/Visual Hierarchy) + Helen A1 图件反馈(caption stand-alone、
+  inset 只第一张、指北针各图一致) ②我的做图两条路(GEE 出底图 / ArcGIS Pro 排版) ③老师对布局的反馈
+  (主图挪**左**、inset/图例/比例尺/N 指北针**竖排右侧左对齐**、修掉"左边被裁") ④标准版面 ASCII 模板 + 配色 + ArcGIS 操作。
+  A4 重做地图直接照它走。
 
 ### R8 时间线（4分 · 喂：US10）
 - 更新到 **A4 最终报告 + oral**，每周做什么。
