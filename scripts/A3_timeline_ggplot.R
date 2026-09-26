@@ -11,22 +11,22 @@ today <- as.Date("2026-09-26")
 
 # 1) 任务（对应真实做过 + 往 A4 走）/ tasks
 tasks <- data.frame(
-  task  = c("P0  A2 proposal submitted",
+  task  = c("P0  A2 proposal",
             "P1  Acquire + pre-process Landsat 8 (pre/post-fire)",
             "P2  Feature stack: spectral + 2016 spring (S+Sp); terrain as covariate",
             "P3  Data exploration & cleaning + separability JM  (R3)",
             "P4  Relationships: regression dNBR ~ pre-fire predictors  (R4)",
             "P5  RF classification (S+Sp) + accuracy + refugia  (R5) [Obj 1-2]",
-            "P6  Final maps in ArcGIS Pro + submit A3",
+            "P6  Final maps in ArcGIS Pro",
             "P7  Refine classification + accuracy assessment (A4)",
             "P8  Overlay refugia x vegetation x terrain -> species shortlist [Obj 3-4]",
             "P9  Write final report",
             "P10 Prepare & give oral"),
   phase = c("A2","Analysis","Analysis","Analysis","Analysis","A3","A3","A4","A4","A4","Oral"),
   start = as.Date(c("2026-09-07","2026-09-09","2026-09-12","2026-09-15","2026-09-18",
-                    "2026-09-20","2026-09-26","2026-09-28","2026-10-02","2026-10-06","2026-10-12")),
-  end   = as.Date(c("2026-09-09","2026-09-13","2026-09-16","2026-09-20","2026-09-22",
-                    "2026-09-26","2026-09-27","2026-10-04","2026-10-09","2026-10-13","2026-10-18"))
+                    "2026-09-20","2026-09-26","2026-09-28","2026-10-05","2026-10-12","2026-10-19")),
+  end   = as.Date(c("2026-09-13","2026-09-13","2026-09-16","2026-09-20","2026-09-22",
+                    "2026-09-26","2026-09-27","2026-10-06","2026-10-14","2026-10-22","2026-10-25"))
 )
 
 # 2) done 标记(结束日 <= today 的算已完成)
@@ -38,8 +38,8 @@ tasks$phase <- factor(tasks$phase, levels = c("A2","Analysis","A3","A4","Oral"))
 
 # 4) 提交截止日 / milestones（A3 延期到 09-27）
 milestones <- data.frame(
-  label = c("A2","A3 (extended)","A4 report"),
-  date  = as.Date(c("2026-09-09","2026-09-27","2026-10-14"))
+  label = c("A2","A3","A4 report"),
+  date  = as.Date(c("2026-09-13","2026-09-27","2026-10-23"))
 )
 
 ny <- nrow(tasks)
@@ -52,10 +52,6 @@ p <- ggplot(tasks) +
   geom_point(data = subset(tasks, done),
              aes(x = end, y = task), shape = 21, size = 2.6,
              fill = "white", colour = "#3A2A22", stroke = 0.9) +
-  # today 竖线
-  geom_vline(xintercept = today, colour = "#2E7D32", linewidth = 0.7) +
-  annotate("text", x = today, y = ny + 0.9, label = "today", hjust = -0.1,
-           size = 3, colour = "#2E7D32", fontface = "bold") +
   # 里程碑虚线
   geom_vline(data = milestones, aes(xintercept = date),
              linetype = "dashed", colour = "#8A756A") +
@@ -65,7 +61,7 @@ p <- ggplot(tasks) +
   scale_x_date(date_breaks = "1 week", date_labels = "%d %b") +
   scale_y_discrete(expand = expansion(add = c(0.6, 1.6))) +
   labs(title = "ERST619 Kaupapa Tuhika 3 - Project Timeline",
-       subtitle = "Port Hills 2017: pre-fire fuel classification (S+Sp) -> ephemeral refugia. Open dot = done; green line = today.",
+       subtitle = "Port Hills 2017: pre-fire fuel classification (S+Sp) -> ephemeral refugia. Open dot = done.",
        x = NULL, y = NULL, colour = "Phase") +
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank(),
