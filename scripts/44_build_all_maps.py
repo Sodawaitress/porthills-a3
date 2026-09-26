@@ -379,8 +379,8 @@ def build(lname, title, m, cls, per, credits, want_locator,
     print("  ok", lname)
 
 
-TITLE1 = "Map 1: Pre-fire fuel classes, Port Hills, 2017"
-TITLE2 = "Map 2: Burn severity and unburnt refugia, Port Hills, 2017"
+TITLE1 = "Pre-fire fuel classes, Port Hills, 2017"
+TITLE2 = "Burn severity and unburnt refugia, Port Hills, 2017"
 
 # name, palette, hillshade, transparency, locator, floating panel, extra notes
 SPECS_MAP1 = [

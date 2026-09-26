@@ -258,7 +258,7 @@ strip_attribution(m3)
 
 build_layout(
     "Map3_DataCleaning",
-    "Map 3: Spatial data cleaning of the 30 m grid, Port Hills fire, 2017",
+    "Spatial data cleaning of the 30 m grid, Port Hills fire, 2017",
     m3, [c3, p3],
     ["Data: Landsat 8 OLI Collection 2 Level-2 (USGS); CDEM/ECan 2017 fire boundary. "
      "Basemap: Eagle Technology, LINZ, StatsNZ, NIWA.",
