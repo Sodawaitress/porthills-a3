@@ -26,3 +26,8 @@ venv/
 .venv/
 
 # keep: *.py, *.md, *.png, *.csv (small diagnostics/results)
+
+# R session junk
+.RData
+.Rhistory
+.Rapp.history
