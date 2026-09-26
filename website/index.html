@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Port Hills 2017 · Fire Refugia — Preliminary Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav>
+  <div class="wrap">
+    <div class="brand">Port&nbsp;Hills&nbsp;<span>2017</span></div>
+    <div class="links">
+      <a href="#why">Why</a>
+      <a href="#data">Data</a>
+      <a href="#relationships">Relationships</a>
+      <a href="#classification">Classification</a>
+      <a href="#refugia">Refugia</a>
+      <a href="#forward">Way forward</a>
+      <a href="#references">References</a>
+      <a href="gallery.html" style="color:var(--fire)">Gallery ↗</a>
+    </div>
+    <div class="lang-toggle" id="lang">
+      <button data-lang="en" class="active">EN</button>
+      <button data-lang="zh">中</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap reveal in">
+    <div class="section-tag">Preliminary Analysis · ERST619 A3</div>
+    <h1>The 2017 Port Hills fire.<br>Where <span class="green">didn't</span> it burn — and <span class="flame">why?</span></h1>
+    <p class="lede">A remote-sensing search for <b>fire refugia</b>: the unburnt patches that survive inside a fire perimeter, shelter seed and soil, and seed the recovery of the whole landscape. This report rebuilds the burn from Landsat 8, cleans it carefully, maps the fuels that carried it, and asks a sharper question than the official map answered — <i>how much unburnt ground was never drawn?</i></p>
+
+    <div class="hero-stats">
+      <div class="stat"><div class="num">1,759<span style="font-size:.5em"> ha</span></div><div class="lbl">official fire perimeter</div></div>
+      <div class="stat"><div class="num fire" data-count="1268" data-suffix=" ha">0 ha</div><div class="lbl">burned (grid, central estimate)</div></div>
+      <div class="stat"><div class="num green" data-count="175" data-suffix=" ha">0 ha</div><div class="lbl">unburnt ground the official map <b>never drew</b></div></div>
+      <div class="stat"><div class="num">4</div><div class="lbl">vegetation fuel classes mapped</div></div>
+    </div>
+    <div class="scroll-hint">Yu&nbsp;Zhou · 1169944 · Lincoln University · with Dr&nbsp;Helen&nbsp;de&nbsp;Klerk&nbsp;&nbsp;↓&nbsp;scroll</div>
+  </div>
+</header>
+
+<!-- ============ WHY ============ -->
+<section id="why">
+  <div class="wrap">
+    <div class="section-tag reveal">Purpose · Wegmann Step 1</div>
+    <h2 class="section-title reveal">Why hunt for the ground that didn't burn</h2>
+    <p class="section-sub reveal">Warming climate, a fire-primed Canterbury, and a legacy of cleared land now carrying gorse — the reasons this landscape burns, and why a vegetation map is the tool that lets us read it.</p>
+
+    <div class="grid three">
+      <div class="card reveal">
+        <div class="kicker">The driver</div>
+        <h3>A warming, drying east coast</h3>
+        <p>Fire weather is lengthening across eastern Aotearoa New Zealand. Hotter, drier summers push more days over the ignition threshold on the Port Hills. <span class="src lit" title="WMO climate assessment">📖 WMO</span></p>
+      </div>
+      <div class="card reveal">
+        <div class="kicker">The fuel</div>
+        <h3>Gorse on cleared land</h3>
+        <p>A century of clearance left exotic grassland and dense, oily <i>gorse &amp; broom</i> — fast-drying, highly flammable fuel — sitting next to native scrub and pine. What grows where decides what burns. <span class="src lit" title="Wyse et al. — flammability of NZ species">📖 Wyse</span></p>
+      </div>
+      <div class="card reveal">
+        <div class="kicker">The tool</div>
+        <h3>Why a classification map</h3>
+        <p>A satellite only hands us reflectance numbers. Only a <b>classification</b> attaches a vegetation label to every pixel — and only then can we line up <i>what burned</i> against <i>what grew there</i>, and find the refugia. <span class="src lit" title="Meddens et al. — refugia review">📖 Meddens</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DATA / R3 ============ -->
+<section id="data">
+  <div class="wrap">
+    <div class="section-tag reveal">Data exploration · R3</div>
+    <h2 class="section-title reveal">The cleaning steps that actually mattered</h2>
+    <p class="section-sub reveal">Two of these were flagged by Dr de Klerk as strong technical work in A1 — they just never made it into the writing. Here they are, out loud: what was done, why, and what it costs.</p>
+
+    <!-- 3·0 band-combination exploration -->
+    <div class="reveal" style="margin-bottom:44px">
+      <div style="color:var(--fire);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">The fire from space · before → during → after</div>
+      <h3 style="font-size:24px;margin:0 0 12px">Four satellites, one fire</h3>
+      <p style="color:var(--ink-soft);max-width:74ch;margin:0 0 22px">No single satellite tells the whole story. An optical camera sees colour but not through smoke; radar sees through cloud but not colour; a thermal sensor catches the flames themselves. Reading the Port Hills fire meant using four of them together — each with its own strength and its own blind spot.</p>
+      <div class="strip">
+        <div class="cell"><div class="n" style="font-size:19px;color:var(--fire)">Landsat 8</div><div class="l">30 m optical · the dNBR workhorse (NIR + SWIR2). <b>Limit:</b> 16-day revisit, cloud gaps.</div></div>
+        <div class="cell"><div class="n" style="font-size:19px;color:var(--refugia)">Sentinel-2</div><div class="l">10 m optical · sharper detail. <b>Limit:</b> no pre-fire scene here until 13 Feb.</div></div>
+        <div class="cell"><div class="n" style="font-size:19px;color:var(--sky)">Sentinel-1</div><div class="l">~10 m radar (SAR) · sees through smoke &amp; cloud. <b>Limit:</b> speckle noise.</div></div>
+        <div class="cell"><div class="n" style="font-size:19px;color:var(--gold)">FIRMS / VIIRS</div><div class="l">active-fire hotspots · tracks spread. <b>Limit:</b> coarse, thermal only.</div></div>
+      </div>
+    </div>
+
+    <!-- THE WHOLE STORY IN TRUE COLOUR -->
+    <div class="reveal">
+      <div style="color:var(--gold);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">The whole story · in true colour · exactly what your eyes would see</div>
+      <h3 style="font-size:22px;margin:0 0 14px">Green hills → smoke → black scar → growing back</h3>
+      <div class="timeline-fig">
+        <div class="tl-stage">
+          <img id="tlBase" src="assets/fire_pre_truecolour.png" alt="Port Hills seen from space">
+          <img id="tlTop" src="assets/fire_pre_truecolour.png" alt="" aria-hidden="true">
+          <div class="tl-caption">
+            <div class="d" id="tlDate">24 Jan 2017 · Sentinel-2</div>
+            <div class="t" id="tlTitle">Before</div>
+            <div class="x" id="tlText">Green hills — farms, homes and native bush, exactly as everyone knew them.</div>
+          </div>
+        </div>
+        <div class="tl-controls" id="tlControls">
+          <button class="active" data-i="0">🌱 Before</button>
+          <button data-i="1">🔥 Fire starts</button>
+          <button data-i="2">🖤 After</button>
+          <button data-i="3">🌿 A year later</button>
+          <button class="tl-play" id="tlPlay">▶ play</button>
+        </div>
+        <div class="tl-progress"><span id="tlBar"></span></div>
+      </div>
+      <p class="plain" style="margin:14px 0 8px">These are ordinary photos from space — no tricks, no false colour. Click through and watch the <b>same hills</b>: from <b>green</b>, to <b>smoke on the day it started</b>, to a <b>black burn scar</b> two weeks later, and a year on you can <i>still</i> see the mark. This is the whole fire, the way your own eyes would see it.</p>
+      <p style="font-size:12.5px;color:var(--ink-faint);margin:0 0 44px"><span class="src">Sentinel-2 true colour (bands B4/B3/B2) · four dates</span> &nbsp; <b>Limit:</b> the small white puffs are cloud, not smoke. The "before" frame is a Level-1C scene (no cloud-cleaned pre-fire image existed here yet); the others are Level-2A.</p>
+    </div>
+
+    <!-- AFTER -->
+    <div class="reveal">
+      <div style="color:var(--sky);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">After · the scar settles</div>
+      <h3 style="font-size:22px;margin:0 0 16px">Once the smoke clears, the damage is measurable</h3>
+      <div class="grid three">
+        <figure><img src="assets/2017-02-23_S2_10m_SWIR.png" alt="Sentinel-2 SWIR post-fire"><figcaption><b>Full scar, 10 m.</b> Sentinel-2 SWIR, two weeks on — the burn has settled into its final shape. <span class="src">Sentinel-2 · 23 Feb 2017</span></figcaption></figure>
+        <figure><img src="assets/2017-02-24_Landsat_30m_SWIR.png" alt="Landsat SWIR post-fire"><figcaption><b>Same scar, Landsat.</b> Coarser 30 m, but this is the workhorse dNBR is built from. <span class="src">Landsat 8 · 24 Feb 2017 · cloud 36%</span></figcaption></figure>
+        <figure><img src="assets/2017_SAR_change_VH_12Feb_vs_2Mar.png" alt="SAR change"><figcaption><b>Radar cross-check.</b> Sentinel-1 VH backscatter drop = vegetation gone. Matches the optical scar by a fully independent method. <span class="src">Sentinel-1 SAR · 12 Feb vs 2 Mar · speckle noise</span></figcaption></figure>
+      </div>
+    </div>
+
+    <!-- dNBR + severity -->
+    <div class="grid two reveal" style="margin-top:36px;align-items:start">
+      <figure><img src="assets/DNBR_2017_Landsat.png" alt="dNBR"><figcaption><b>dNBR — the burn as a number.</b> Pre-fire NBR (8 Feb) minus post-fire NBR (24 Feb). Red = severe loss, blue = untouched. Every later step is built on this one layer. <span class="src">Landsat 8 · 8 Feb → 24 Feb · slope not illumination-corrected, but it cancels in the difference</span></figcaption></figure>
+      <figure><img src="assets/SEVERITY_2017_Landsat.png" alt="Severity"><figcaption><b>Severity classes.</b> dNBR thresholded: unburnt → low → moderate → high. The white gaps are cloud holes in the post-fire Landsat — an honest data limit, not unburnt ground. <span class="src">Landsat 8 dNBR</span></figcaption></figure>
+    </div>
+
+    <!-- six-panel -->
+    <figure class="reveal" style="margin-top:40px">
+      <img src="assets/A1_visualisation_panels.png" alt="Six-panel band composite">
+      <figcaption><b>All of it, side by side.</b> Pre- and post-fire natural colour, CIR, the SWIR burn composite, NDVI and dNBR. The post-fire natural-colour frame shows the scar (dark) is a different thing from cloud (bright white); dNBR then lights red on exactly that patch — the visual case for keeping the char a naïve mask would delete. <span class="src yu">👤 Yu · script 24 (built from the local stack, no GEE)</span></figcaption>
+    </figure>
+
+    <details class="script reveal">
+      <summary>How these were made — the GEE recipe <span class="tag">GEE · Python · reproducible</span></summary>
+      <div class="body">
+        <p>Every image above comes from two openly-searchable collections. The core calls, so anyone can reproduce them for any area and date:</p>
+        <pre><span class="k">import</span> ee; ee.Initialize(project=<span class="s">'genuine-hold-427410-f0'</span>)
+aoi = ee.Geometry.Rectangle([<span class="s">172.55, -43.65, 172.67, -43.56</span>])
+
+<span class="c"># DURING — Sentinel-2, ignition day (13 Feb)</span>
+s2 = (ee.ImageCollection(<span class="s">'COPERNICUS/S2_SR_HARMONIZED'</span>)
+      .filterBounds(aoi).filterDate(<span class="s">'2017-02-13'</span>, <span class="s">'2017-02-14'</span>).first())
+true_colour = s2.select([<span class="s">'B4'</span>, <span class="s">'B3'</span>, <span class="s">'B2'</span>])     <span class="c"># natural colour</span>
+swir_glow   = s2.select([<span class="s">'B12'</span>, <span class="s">'B8'</span>, <span class="s">'B4'</span>])    <span class="c"># SWIR -> active fire glows</span>
+
+<span class="c"># dNBR — Landsat 8, pre (8 Feb) vs post (24 Feb)</span>
+<span class="k">def</span> nbr(ic):
+    img = ic.median().select(<span class="s">'SR_B.'</span>).multiply(<span class="s">0.0000275</span>).add(<span class="s">-0.2</span>)
+    <span class="k">return</span> img.normalizedDifference([<span class="s">'SR_B5'</span>, <span class="s">'SR_B7'</span>])  <span class="c"># (NIR-SWIR2)/(NIR+SWIR2)</span>
+L8   = ee.ImageCollection(<span class="s">'LANDSAT/LC08/C02/T1_L2'</span>).filterBounds(aoi)
+dnbr = nbr(L8.filterDate(<span class="s">'2017-02-01'</span>, <span class="s">'2017-02-11'</span>)) \
+     .subtract(nbr(L8.filterDate(<span class="s">'2017-02-24'</span>, <span class="s">'2017-03-30'</span>))).multiply(<span class="s">1000</span>)</pre>
+        <p class="reuse"><b>Reuse:</b> change <code>aoi</code> and the dates and this reproduces natural-colour, SWIR and dNBR for any fire with Landsat / Sentinel-2 coverage. For radar, swap in <code>COPERNICUS/S1_GRD</code>, band <code>VH</code>, pre- vs post-fire.</p>
+      </div>
+    </details>
+
+    <!-- 3a smart mask -->
+    <div class="grid two" style="align-items:start">
+      <figure class="reveal">
+        <img src="assets/A1_truecolor_burn_vs_shadow_2017.png" alt="2017 true colour vs QA_PIXEL cloud-shadow frequency">
+        <figcaption><b>Left:</b> post-fire true colour, 24 Feb 2017 — burn scar reads dark. <b>Right:</b> how often Landsat's <code>QA_PIXEL</code> bit-4 flags each pixel as "cloud shadow" across the whole post-fire window. The perimeter fills with blue: char keeps getting called shadow. <span class="src yu">👤 Yu · script&nbsp;25</span></figcaption>
+      </figure>
+      <div class="reveal">
+        <div class="kicker" style="color:var(--fire);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">3a · Smart cloud-shadow mask</div>
+        <h3 style="font-size:24px;margin:0 0 10px">Burn scar ≠ shadow</h3>
+        <p style="color:var(--ink-soft)">Fresh char is spectrally dark — almost indistinguishable from cloud shadow to an automatic QA flag. A naïve mask therefore deletes exactly the pixels that burned hardest. The fix: mask cloud everywhere, but keep the "shadow" flag <b>only outside the fire perimeter</b>. Inside, dark means char, not shadow.</p>
+        <div class="bignum" style="margin-top:18px">
+          <div class="n fire" data-count="242" data-suffix=" ha">0 ha</div>
+          <div class="cap">of high-dNBR burn scar a naïve mask would have thrown away — flagged as "shadow" in all five post-fire scenes. <span class="src yu">👤 Yu · A1 script, lines 78–87</span></div>
+        </div>
+        <p class="note" style="margin-top:16px"><b>Limit:</b> assumes no genuine cloud shadow falls <i>inside</i> the perimeter. A 500&nbsp;m outward buffer absorbs most edge cases; residual error is expected to be small.</p>
+      </div>
+    </div>
+
+    <details class="script reveal">
+      <summary>00_A1_PortHills_dNBR.js — smart mask <span class="tag">GEE · JavaScript · reusable</span></summary>
+      <div class="body">
+        <p>The QA logic, straight from the source. Cloud (bit&nbsp;3) is masked everywhere; shadow (bit&nbsp;4) is masked only where the pixel is <i>not</i> inside the fire.</p>
+        <pre><span class="c">// QA_PIXEL bits: 3 = cloud, 4 = cloud shadow</span>
+<span class="k">function</span> maskL8clouds_QA(image) {
+  <span class="k">var</span> qa = image.select(<span class="s">'QA_PIXEL'</span>);
+  <span class="k">var</span> inFire = ee.Image.constant(<span class="s">1</span>).clip(aoi).mask();
+  <span class="k">var</span> bad = qa.bitwiseAnd(<span class="s">1 &lt;&lt; 3</span>).neq(<span class="s">0</span>)            <span class="c">// cloud: everywhere</span>
+    .or(qa.bitwiseAnd(<span class="s">1 &lt;&lt; 4</span>).neq(<span class="s">0</span>).and(inFire.not())); <span class="c">// shadow: outside only</span>
+  <span class="k">return</span> scaleSR(image).updateMask(bad.not());
+}</pre>
+        <p class="reuse"><b>Reuse:</b> swap <code>aoi</code> for any fire perimeter and this keeps char inside while still cleaning cloud — works for any Landsat C2L2 burn where fresh scar is being lost to shadow flags.</p>
+      </div>
+    </details>
+
+    <!-- 3b offset -->
+    <div class="grid two" style="margin-top:56px;align-items:center">
+      <div class="reveal">
+        <div class="kicker" style="color:var(--fire);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">3b · Seasonal-drift offset</div>
+        <h3 style="font-size:24px;margin:0 0 10px">Making dNBR = 0 mean "nothing changed"</h3>
+        <p style="color:var(--ink-soft)">Unburnt vegetation <i>should</i> read dNBR&nbsp;=&nbsp;0. But the pre- and post-fire composites are weeks apart, so seasonal and atmospheric drift push it off zero. A control ring around the fire (inner 500&nbsp;m, outer 2&nbsp;km), matched to the fire's own elevation and slope range, with Dynamic World excluding cropland and water, gives the true baseline — subtracted from the whole scene.</p>
+        <div class="bignum" style="margin-top:18px">
+          <div class="n ember" data-count="83.6">0</div>
+          <div class="cap">the dNBR reading of genuinely <b>unburnt</b> vegetation before correction (should be 0) — the seasonal drift, removed. Better still, the offset is corrected <b>per cover type</b> (trees 65, shrub 84, <b>grass 119</b> — grass drifts most). <span class="src calc">🤖 grid · per-class offset</span></div>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="strip">
+          <div class="cell"><div class="n" style="color:var(--ink)">10</div><div class="l">pre-fire scenes</div></div>
+          <div class="cell"><div class="n" style="color:var(--ink)">5</div><div class="l">post-fire scenes</div></div>
+          <div class="cell"><div class="n" style="color:var(--refugia)">18,581</div><div class="l">core cells (1,672 ha) after cleaning</div></div>
+          <div class="cell"><div class="n" style="color:var(--fire)">170.8 ha</div><div class="l">post-fire cloud gap removed</div></div>
+        </div>
+        <p class="note" style="margin-top:16px;color:var(--ink-faint);font-size:13.5px;border-left:2px solid var(--line);padding-left:12px"><b style="color:var(--ink-soft)">Limit:</b> the offset is a single ring-wide mean; individual pixels may keep a small residual bias.</p>
+      </div>
+    </div>
+
+    <div class="chart-box reveal" style="margin-top:28px">
+      <div class="controls" id="offset-controls">
+        <button class="active" data-off="raw">Before correction</button>
+        <button data-off="corr">After correction</button>
+      </div>
+      <canvas id="offsetChart" height="200"></canvas>
+      <p style="color:var(--ink-faint);font-size:13px;margin-top:14px">dNBR distribution of unburnt control ground (mean 83.6, s.d. 64.4). <b>Before:</b> the whole distribution sits shifted right — seasonal &amp; atmospheric drift. <b>After:</b> subtracting the offset slides it back so <b>0 truly means "no change".</b> Toggle to watch it move. <span class="src calc">🤖 grid</span></p>
+    </div>
+
+    <details class="script reveal">
+      <summary>26_A1_python_port_get_numbers.py — the real numbers <span class="tag">GEE · Python · reproducible</span></summary>
+      <div class="body">
+        <p>A direct Python port of the A1 JavaScript compute steps, written so the numbers that only ever lived in the GEE console (offset, threshold, refugia area) become reproducible output anyone can re-run.</p>
+        <pre><span class="c"># control ring matched to the fire on elevation, slope, cover</span>
+ring = aoi.buffer(<span class="s">2000</span>).difference(aoi.buffer(<span class="s">500</span>), <span class="s">1</span>)
+ctrl = dnbrRaw.updateMask(controlMask).reduceRegion(
+    reducer=ee.Reducer.mean().combine(ee.Reducer.stdDev(), <span class="k">None</span>, <span class="k">True</span>),
+    geometry=ring, scale=<span class="s">30</span>, maxPixels=<span class="s">1e9</span>)
+offset = ee.Number(ctrl.get(<span class="s">'dNBR_mean'</span>))   <span class="c"># → 83.6 (per-class: trees 65 / shrub 84 / grass 119)</span>
+dnbr   = dnbrRaw.subtract(offset)           <span class="c"># now 0 = no change</span></pre>
+        <p class="reuse"><b>Reuse:</b> run on any GEE-authenticated machine — <code>python 26_A1_python_port_get_numbers.py</code> prints offset, threshold T, commission error and unmapped-refugia area for the AOI. Point <code>ASSET_ID</code> at your own fire boundary to reuse wholesale.</p>
+      </div>
+    </details>
+
+    <!-- 3c OUTLIERS (stackA3, wall-to-wall) -->
+    <div class="reveal" style="margin-top:56px">
+      <div style="color:var(--fire);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">3c · Outliers · every cell in the study area</div>
+      <h3 style="font-size:24px;margin:0 0 10px">A few patches don't look like the rest — do we throw them out?</h3>
+      <p class="plain" style="margin:0 0 24px">We looked at all <b>18,581</b> cells (each 30 × 30 m). Most look alike; a few stand out. The real question isn't "are they weird" — it's <b>"are they a mistake, or real ground?"</b> Every odd one here turns out to be <b>real</b>: dense broadleaf/gorse scrub, bright bare soil, deep shade, or steep cliffs. So we <b>keep them and just label them</b> — throwing away real ground would only hide the truth.</p>
+      <figure class="reveal" style="margin-bottom:24px">
+        <img src="assets/A3_boxplots_IQR.png" alt="IQR boxplots of every variable">
+        <figcaption><b>Each box = one variable's normal range.</b> The line is the middle value; the whiskers reach 1.5× the box; red dots stick out beyond. Almost all the odd ones sit in <code>pre_B5</code> (near-infrared). Checking them against the reference points overturns the obvious guess: the high-NIR cells are <b>dense broadleaf &amp; gorse scrub</b> (broadleaf 18%, gorse 12%) — <b>not pine; pine actually has the lowest NIR</b> (median 0.222), because clumped conifer needles shade one another (Ollinger 2011). Nothing is broken; it's real vegetation. <span class="src calc">🤖 04_A3_outliers · stackA3</span></figcaption>
+      </figure>
+      <div class="grid two">
+        <figure class="reveal"><img src="assets/A3_scatter_red_nir.png" alt="Red vs NIR scatter">
+          <figcaption><b>Every dot is one patch of ground.</b> Most cluster in the middle (ordinary vegetation). The ones that wander off each have a plain reason: 🟢 <b>dense broadleaf/gorse</b> (top), 🟠 <b>bright bare soil</b> (right), 🔵 <b>shadow</b> (bottom), 🔴 <b>steep slope</b> (scattered). Real places, not errors. <span class="src calc">🤖 04</span></figcaption>
+        </figure>
+        <figure class="reveal"><img src="assets/A3_scatter_northness_nir.png" alt="Northness vs NIR scatter">
+          <figcaption><b>Sunny side vs shady side.</b> Down here in the south, north-facing slopes catch the sun. The lush broadleaf/gorse patches (green) stay high on the infrared axis whichever way they face — they're bright because they're <i>dense scrub</i>, not just sunlit. <span class="src calc">🤖 04</span></figcaption>
+        </figure>
+      </div>
+      <div class="strip" style="margin-top:24px">
+        <div class="cell"><div class="n" style="font-size:20px;color:var(--refugia)">3.9%</div><div class="l">dense broadleaf/gorse (high NIR) · 65 ha · keep + flag</div></div>
+        <div class="cell"><div class="n" style="font-size:20px;color:var(--gold)">0.4%</div><div class="l">bright sparse ground · 7 ha · keep + flag</div></div>
+        <div class="cell"><div class="n" style="font-size:20px;color:var(--sky)">0.03%</div><div class="l">deep shadow · 0.45 ha · keep + flag</div></div>
+        <div class="cell"><div class="n" style="font-size:20px;color:var(--fire)">0.3%</div><div class="l">steep terrain · 5.5 ha · keep + flag</div></div>
+      </div>
+      <p class="plain" style="margin:18px 0 0"><b>The decision: keep every one, just label it.</b> None are sensor errors — they're real forest, soil, shade and cliffs. Deleting real ground would bias the results, so we flag instead. (Same rule as the dark-char cells earlier: flag, don't delete.)</p>
+    </div>
+
+    <!-- 3d normality + NDVI/BSI (per-class, feeds the classification step) -->
+    <div class="reveal" style="margin-top:56px">
+      <div style="color:var(--fire);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">3d · Normality by class · and the indices Dr de Klerk asked for</div>
+      <h3 style="font-size:24px;margin:0 0 20px">Is the data bell-shaped? Only if you split it by vegetation type</h3>
+    </div>
+    <div class="grid three" style="margin-top:8px;align-items:start">
+      <figure class="reveal">
+        <img src="assets/boxplots_by_class.png" alt="Boxplots by fuel class">
+        <figcaption>Per-class distributions. Testing normality on the <b>mixed</b> point table hid everything — pooled skew/kurtosis "passed" for all 12 variables. Split <b>by class</b> and 19 of 72 combinations break the thresholds. <b>Normality has to be tested within class, not across.</b> <span class="src calc">🤖 03d</span></figcaption>
+      </figure>
+      <figure class="reveal">
+        <img src="assets/histograms_normality.png" alt="Per-variable histograms">
+        <figcaption>The histograms behind that finding. Several variables are visibly multi-modal — <code>northness</code> has a peak at each end — which mixed-class skew/kurtosis simply can't detect. The picture is what forced the per-class test. <span class="src calc">🤖 03d</span></figcaption>
+      </figure>
+      <figure class="reveal">
+        <img src="assets/A1_bsi.png" alt="Bare Soil Index">
+        <figcaption>NDVI &amp; BSI — the layers Dr de Klerk asked to see ("<i>why don't you present your NDVI and BSI?</i>"). NDVI&nbsp;&gt;&nbsp;0.25 masks non-vegetation before burn detection; BSI independently locates bare soil so it isn't mistaken for "unburnt". <span class="src yu">👤 Yu · A1, script 24</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RELATIONSHIPS / R4 ============ -->
+<section id="relationships">
+  <div class="wrap">
+    <div class="section-tag reveal">Relationships · R4</div>
+    <h2 class="section-title reveal">What predicts how hard a pixel burned</h2>
+    <p class="section-sub reveal">Correlation, regression, and an honest test of a state-of-the-art alternative. The headline: pre-fire greenness and bare soil pull hardest — and the answer is robust to the method you choose, with one telling exception.</p>
+
+    <div class="grid two" style="align-items:start">
+      <div class="chart-box reveal">
+        <div class="controls" id="corr-controls">
+          <button class="active" data-corr="pearson">Pearson</button>
+          <button data-corr="spearman">Spearman</button>
+        </div>
+        <canvas id="corrChart" height="260"></canvas>
+        <p style="color:var(--ink-faint);font-size:13px;margin-top:14px">Correlation with dNBR (burn severity). Toggle the method: only <code>pre_B4</code> changes its significance verdict — every other variable keeps its rank and sign. <i>Values shown are point-based; the whole-grid correlation table is pending.</i> <span class="src calc">🤖 04e</span></p>
+      </div>
+      <div class="reveal">
+        <div class="card">
+          <div class="kicker">Linear regression · whole grid</div>
+          <h3>R² = 0.23</h3>
+          <p>Across the whole 30 m grid (spatially thinned, ~1,000 cells), pre-fire spectral + terrain variables explain <b>R² = 0.23</b> of burn-severity variation — modest, and honest. An earlier point-based 0.41 was inflated by a small sample sitting in polygon cores (at n ≈ 64 it jumps to 0.46). Residuals still carry spatial structure (Moran's I 0.63 at 120 m), so <b>GWR is the next step</b>. A second layer — adding <code>FuelClass</code> on the reference cells to test ΔR² — is pending.</p>
+          <p class="note"><b>VIF cleanup:</b> raw bands hit VIF 47–99. Iterative dropping settled on 6 variables (pre_B2, pre_B5, NDMI, elev, slope, northness), all VIF ≤ 7.5.</p>
+        </div>
+        <div class="card" style="margin-top:22px">
+          <div class="kicker">SOTA check, honestly reported</div>
+          <h3>RBR vs dNBR — no improvement</h3>
+          <p>RBR (Parks 2014) relativises dNBR by pre-fire biomass, and our fuels span bare rock to dense pine — exactly its design case. Run side by side: <b>RBR R² = 0.304 vs dNBR 0.322.</b> It did not help. We report that and keep dNBR. <i>(point-based; grid rerun pending.)</i> <span class="src lit">📖 Parks 2014</span> <span class="src calc">🤖 04f</span></p>
+        </div>
+      </div>
+    </div>
+
+    <details class="script reveal">
+      <summary>04f_rbr_regression.py — RBR side-by-side <span class="tag">Python · reproducible</span></summary>
+      <div class="body">
+        <p>Both severity metrics regressed on the same 11 predictors, so the comparison is clean — no cherry-picking which one looks better.</p>
+        <pre>df[<span class="s">"RBR"</span>] = df[<span class="s">"dNBR"</span>] / (df[<span class="s">"NBR_pre"</span>] + <span class="s">1.001</span>)   <span class="c"># Parks 2014</span>
+<span class="k">for</span> Y <span class="k">in</span> [<span class="s">"dNBR"</span>, <span class="s">"RBR"</span>]:
+    model = sm.OLS(df[Y], sm.add_constant(df[PRED])).fit()
+    print(Y, <span class="s">"R2 ="</span>, model.rsquared)   <span class="c"># dNBR 0.322 · RBR 0.304</span></pre>
+        <p class="reuse"><b>Reuse:</b> reads the shared point table; drop in any burn-severity column and predictor list to benchmark a relativised index against the raw one on your own data.</p>
+      </div>
+    </details>
+
+    <figure class="reveal" style="margin-top:40px">
+      <img src="assets/scatter_dnbr.png" alt="Scatter of each predictor vs dNBR">
+      <figcaption><b>Why linear regression is the right call.</b> Each of the six cleaned predictors plotted against dNBR — all six are <b>linear</b>, no curved shape, which is exactly what justifies an ordinary linear model. Single-variable strength is modest, and together they stack to only <b>R² = 0.23</b> on the whole grid — pre-fire state alone can't fully predict how hard a cell burned. <span class="src calc">🤖 04</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ CLASSIFICATION / R5 ============ -->
+<section id="classification">
+  <div class="wrap">
+    <div class="section-tag reveal">Classification · R5</div>
+    <h2 class="section-title reveal">Mapping the fuels that carried the fire</h2>
+    <p class="section-sub reveal">A Random Forest over four vegetation fuel classes, trained on 2015 aerial photo-interpretation and spatially blocked so validation can't cheat. Where the model struggles, the separability analysis already predicted it would.</p>
+
+    <!-- 5·0 unsupervised probe -->
+    <div class="reveal" style="margin-bottom:56px">
+      <div style="color:var(--fire);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Before supervision · k-means probe</div>
+      <h3 style="font-size:24px;margin:0 0 12px">"Can we even tell native scrub from gorse?"</h3>
+      <p style="color:var(--ink-soft);max-width:72ch;margin:0 0 24px">Before training any classifier, unsupervised k-means asked whether the vegetation types are separable at all. It flagged the <code>gorse_broom</code> ↔ <code>broadleaf_scrub</code> overlap right at the start — the same pair the 6-band JM (only <b>0.79</b>) would later put a number on, and the same pair the final confusion matrix confirms. The worry was earned, not incidental.</p>
+      <div class="grid two">
+        <figure><img src="assets/kmeans_k6.png" alt="k-means k=6 clusters"><figcaption><b>k-means, k = 6.</b> Unsupervised clusters over the AOI — a first look at natural spectral groupings before any labels are imposed. <span class="src calc">🤖 kmeans_class_diagnostic</span></figcaption></figure>
+        <figure><img src="assets/profile_k6.png" alt="k-means cluster spectral profiles"><figcaption><b>Cluster spectral profiles.</b> Two clusters track each other closely across the bands — the early signature of the gorse/native-scrub confusion that persists all the way to the final model. <span class="src calc">🤖 kmeans_class_diagnostic</span></figcaption></figure>
+      </div>
+    </div>
+
+    <div class="grid two" style="align-items:start">
+      <figure class="reveal">
+        <img src="assets/rf_confusion_matrix_4class_final.png" alt="4-class RF confusion matrix">
+        <figcaption>4-class confusion matrix. Grid RF gives <b>OA ≈ 0.55–0.58</b> (gorse recall rises 41 → 49% once spring imagery and slope are added). <i>The matrix shown is the earlier point-based version (OA 0.684) and will be re-rendered from the grid RF.</i> <span class="src calc">🤖 grid RF (rerun pending)</span></figcaption>
+      </figure>
+      <figure class="reveal">
+        <img src="assets/spectral_profile_6class.png" alt="Spectral profiles and JM separability">
+        <figcaption>Spectral profiles. The weakest pair by far is <b>gorse_broom vs broadleaf_scrub — 6-band JM only 0.79</b>; their curves overlap. Adding spring imagery lifts the pair to JM 1.45. <span class="src lit">📖 Richards 2013</span> <span class="src calc">🤖 05</span></figcaption>
+      </figure>
+    </div>
+
+    <div class="banner reveal" style="margin-top:32px;border-color:var(--line);background:linear-gradient(180deg,rgba(255,107,53,.06),transparent)">
+      <div class="eyebrow" style="color:var(--fire)">The confusion isn't the model's fault</div>
+      <p style="margin:10px 0 0;color:var(--ink-soft);font-size:16px">The biggest misclassification — <code>broadleaf_scrub</code> ↔ <code>gorse_broom</code> — lands exactly on the pair the 6-band JM (0.79, the weakest pair) flagged as spectrally inseparable. The accuracy ceiling here is a real property of the vegetation, not a modelling error, and the report says so.</p>
+    </div>
+
+    <!-- SHAP interactive -->
+    <div class="grid two" style="margin-top:56px;align-items:start">
+      <figure class="reveal">
+        <img src="assets/shap_importance_by_class.png" alt="SHAP importance by class">
+        <figcaption>SHAP values on the same 4-class RF. Beyond a single Gini ranking, SHAP shows <b>direction</b> and <b>per-class</b> importance. <span class="src lit">📖 Lundberg &amp; Lee 2017</span> <span class="src calc">🤖 06d</span></figcaption>
+      </figure>
+      <div class="reveal">
+        <div class="card">
+          <div class="kicker">What Gini couldn't tell us</div>
+          <h3>Slope is <i>pasture's</i> hidden signal</h3>
+          <p><code>slope</code> ranks 7th globally by Gini importance — easy to dismiss. But split by class, it's the <b>number-one</b> feature for <code>pasture</code> (flat ground = paddock). Averaging across four classes drowned it out.</p>
+          <p style="margin-top:14px"><code>pre_B4</code> (red) is the top global variable, but SHAP shows its <i>sign flips</i>: strongly positive for pasture (+0.94 — bright grass), negative for the other three. A single importance number hides that entirely.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REFUGIA / R6-R7 — THE PEAK ============ -->
+<section id="refugia">
+  <div class="wrap">
+    <div class="section-tag reveal">The core finding · R7</div>
+    <h2 class="section-title reveal">The refugia the official map never drew</h2>
+    <p class="section-sub reveal">This is the finding the whole project was for. Using two hand-drawn unburnt islands as an independent reference, a defensible threshold separates burnt from unburnt — and then finds far more unburnt ground than anyone mapped by eye.</p>
+
+    <div class="reveal" style="margin:0 0 28px;padding:12px 16px;border:1px solid var(--gold);border-radius:10px;background:rgba(242,183,5,.08);font-size:13.5px;color:var(--ink-soft)">⚠ <b>The refugia area, island recall and survival-by-class figures below are the earlier point-based results</b> — they are being re-run on the 30 m grid with per-class offset, so treat the exact numbers as provisional. The threshold <b>T = 118.7</b> and commission <b>3.0%</b> are already the updated grid values.</div>
+
+    <div class="banner reveal">
+      <div class="eyebrow">Unmapped refugia</div>
+      <div style="display:flex;flex-wrap:wrap;gap:40px;align-items:flex-end;margin-top:14px">
+        <div>
+          <div class="bignum" style="border:0;background:transparent;padding:0">
+            <div class="n green" data-count="175.3" data-suffix=" ha">0 ha</div>
+            <div class="cap" style="max-width:34ch">of unburnt ground the official map <b>never drew</b> — 62.9% of all the refugia this method found.</div>
+          </div>
+        </div>
+        <div style="color:var(--ink-soft);font-size:16px;max-width:46ch">
+          The official map drew two islands: <b>114.9 ha</b>. This method finds <b>278.9 ha</b> of unburnt ground in total — of which only 103.6 ha sits inside those islands. Refugia are mostly small, scattered, terrain-sheltered patches that eye-mapping systematically misses. Scaled to the full perimeter: ≈ 193 ha.
+        </div>
+      </div>
+    </div>
+
+    <div class="grid three" style="margin-top:32px">
+      <div class="card reveal">
+        <div class="kicker">Threshold, defensibly chosen</div>
+        <h3>T = 118.7</h3>
+        <p>The 90th percentile of dNBR inside the known unburnt islands — "90% of confirmed refugia stay classed unburnt". Otsu was tested and rejected (it cut inside the burned group). Commission error at T: just <b>3.0%</b> (2×SD would give 128.9). Per-class offset lowers it to <b>T = 114.9</b>. <span class="src calc">🤖 grid</span></p>
+      </div>
+      <div class="card reveal">
+        <div class="kicker">Independent validation</div>
+        <h3>recall 0.851 / 0.953</h3>
+        <p>Two hand-drawn islands, checked separately: 85.1% and 95.3% of their pixels correctly classed unburnt, mean dNBR −13.9 / −21.1 (below baseline = genuinely unburnt). The reverse also holds: <b>88.1%</b> of officially-burnt ground is classed burnt. <span class="src joint">🤝 CSV + 26</span></p>
+      </div>
+      <div class="card reveal">
+        <div class="kicker">Sensitivity</div>
+        <h3>±50 → 1,385 / 1,218 ha</h3>
+        <p>Move T by ±50 and the burned-area estimate shifts. Drag it yourself below — the threshold genuinely matters, and hiding that would be dishonest.</p>
+      </div>
+    </div>
+
+    <div class="chart-box reveal" style="margin-top:32px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px">
+        <div>
+          <span style="font-family:var(--mono);color:var(--fire);font-size:11px;letter-spacing:.12em;text-transform:uppercase">Interactive · threshold sensitivity</span>
+          <h3 style="font-size:22px;margin:6px 0 0">Drag the threshold, watch the burn move</h3>
+        </div>
+        <div style="text-align:right">
+          <div style="font-family:var(--mono);font-size:36px;font-weight:700;color:var(--fire);line-height:1" id="tBurned">1,268 ha</div>
+          <div style="font-size:12.5px;color:var(--ink-faint);margin-top:4px">burned&nbsp;·&nbsp;<span id="tUnburned" style="color:var(--refugia)">326 ha unburnt</span></div>
+        </div>
+      </div>
+      <input type="range" id="tSlider" min="68.7" max="168.7" step="0.5" value="118.7" style="width:100%;margin-top:22px;accent-color:var(--fire)">
+      <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-top:6px">
+        <span>68.7 · looser</span><span id="tVal" style="color:var(--ink);font-weight:700">T = 118.7</span><span>168.7 · stricter</span>
+      </div>
+      <p style="color:var(--ink-faint);font-size:13px;margin-top:16px">The chosen <b>T = 118.7</b> is the 90th percentile of dNBR inside the known unburnt islands — it sits in the middle here. Slide it and burned area moves around the central estimate of <b>1,268 ha</b> (end-point values approximate, exact grid rerun pending). <span class="src calc">🤖 grid</span></p>
+    </div>
+
+    <figure class="reveal" style="margin-top:40px">
+      <img src="assets/refugia_veg_terrain.png" alt="Refugia by vegetation and terrain">
+      <figcaption><b>Who survives, and where.</b> Survival rate: <code>exotic_pine</code> 21.4% ≈ <code>pasture</code> 19.9% &gt; <code>broadleaf_scrub</code> 14.9% ≈ <code>gorse_broom</code> 14.0%. Across 17,519 pixels, refugia sit <b>higher</b> (247.9 vs 219.2 m), on <b>gentler</b> slopes (16.1° vs 17.5°) and <b>less north-facing</b> (0.13 vs 0.28) ground — every direction matching fire-ecology expectation (Welch t, p &lt; 1e-20). <span class="src calc">🤖 12 · 13</span></figcaption>
+    </figure>
+
+    <p class="note reveal" style="max-width:70ch;color:var(--ink-faint);font-size:14px;border-left:2px solid var(--line);padding-left:14px;margin-top:24px"><b style="color:var(--ink-soft)">Limit:</b> the 175.3 ha is a total-area difference, not each patch verified one by one. Confirming a sample against aerial photos — to rule out bare rock or shadow posing as "unburnt vegetation" — is the next step before calling all of it true refugia.</p>
+  </div>
+</section>
+
+<!-- ============ WAY FORWARD / R6 ============ -->
+<section id="forward">
+  <div class="wrap">
+    <div class="section-tag reveal">Way forward · R6</div>
+    <h2 class="section-title reveal">How far this method travels</h2>
+    <p class="section-sub reveal">The pipeline doesn't depend on this particular fire. Here's what transfers as-is, and the specific data that — based on what was actually missing here — would push it further.</p>
+
+    <div class="grid two">
+      <div class="card reveal">
+        <div class="kicker">Transferable as-is</div>
+        <h3>The pipeline</h3>
+        <p>Landsat 8 composite (cloud mask + scaling) → LCDB + aerial labels, with <code>cleared_pine</code> defined by Hansen forest-loss ∩ vegetation polygon (change-data instead of spectral guessing — works for any Hansen-covered forest fire) → 15 m pixel-purity check (half a Landsat pixel; drops straight into any 30 m task) → spatial-block split (kills spatial autocorrelation) → exploration, regression, RF → wall-to-wall classify + clip to true perimeter → refugia × vegetation × terrain. None of it is Port-Hills-specific.</p>
+      </div>
+      <div class="card reveal">
+        <div class="kicker">What would help — and by how much</div>
+        <h3>The missing data</h3>
+        <p><b>Sentinel-2 red-edge &amp; spring imagery</b> → lifts the gorse/broadleaf JM from <b>0.79 to 1.45</b> and gorse recall from 41% to 49%, and unlocks a full-year phenology series (2016 had a clean image every month). <span class="src calc">🤖 grid</span><br>
+        <b>Pre-fire LiDAR (CHM + texture)</b> → literature shows ~14% accuracy gain; the best shot at the gorse↔broadleaf confusion.<br>
+        <b>More post-fire revisits</b> → 16 of 19 <code>cleared_pine</code> points hit cloud; more satellites = fewer lost pixels.<br>
+        <b>Fine-scale fuel-moisture / wind fields</b> → station data is too uniform across a few km²; a modelled field would add a variable class that's currently absent.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ REFERENCES / R8 ============ -->
+<section id="references">
+  <div class="wrap">
+    <div class="section-tag reveal">Provenance · R8</div>
+    <h2 class="section-title reveal">Every claim, traceable</h2>
+    <p class="section-sub reveal">Source tags throughout: <span class="src lit">📖 literature</span> <span class="src yu">👤 Yu's own work</span> <span class="src calc">🤖 computed here</span> <span class="src joint">🤝 joint</span></p>
+
+    <div class="grid two" style="align-items:start">
+      <div class="reveal">
+        <h3 style="font-size:16px;color:var(--ink-faint);font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px">Key literature</h3>
+        <ul class="ref-list">
+          <li><b>Parks et al. (2014)</b> — A new metric for quantifying burn severity: the Relative dNBR. <i>Remote Sensing</i> 6(3).</li>
+          <li><b>Lundberg &amp; Lee (2017)</b> — A unified approach to interpreting model predictions (SHAP). <i>NeurIPS</i>.</li>
+          <li><b>Domingo et al. (2020)</b> — ALS + Sentinel-2 fuel classification; RF overfitting reference.</li>
+          <li><b>Key &amp; Benson (2006)</b> — Landscape assessment: NBR &amp; dNBR sampling.</li>
+          <li><b>Meddens et al. (2018)</b> — Fire refugia: a review of ecological importance.</li>
+          <li><b>Richards (2013)</b> — <i>Remote Sensing Digital Image Analysis</i> — JM separability.</li>
+          <li><b>Scott &amp; Burgan (2005)</b> — Standard fire behavior fuel models.</li>
+        </ul>
+      </div>
+      <div class="reveal">
+        <h3 style="font-size:16px;color:var(--ink-faint);font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px">Scripts (all reusable)</h3>
+        <ul class="ref-list">
+          <li><b>00_A1_PortHills_dNBR.js</b> — smart mask, offset, island-p90 threshold, validation.</li>
+          <li><b>24_A1_export_figures.py</b> — NDVI/BSI/true-colour panels from the local stack (no GEE).</li>
+          <li><b>25_2017_truecolor_shadow_freq.py</b> — QA_PIXEL shadow-frequency proof.</li>
+          <li><b>26_A1_python_port_get_numbers.py</b> — reproducible offset / T / refugia numbers.</li>
+          <li><b>04e / 04f</b> — Spearman correlation · RBR regression.</li>
+          <li><b>05 / 06c / 06d</b> — JM separability · RF classify · SHAP.</li>
+          <li><b>12 / 13</b> — wall-to-wall classify · refugia × terrain analysis.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Port Hills 2017 · Fire Refugia — Preliminary Analysis (ERST619 A3).<br>
+    Yu Zhou (1169944), Lincoln University, with Dr Helen de Klerk. Projection EPSG:2193 (NZTM). Landsat 8 Collection 2 Level 2.<br>
+    <span style="color:var(--ink-faint)">This site presents the analysis; the submitted written report is authored separately.</span></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

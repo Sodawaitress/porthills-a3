@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Port Hills · Image Gallery &amp; Compare</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .gwrap { max-width: 1180px; margin: 0 auto; padding: 0 24px; }
+  .ghead { padding: 90px 0 24px; }
+  .ghead h1 { font-size: clamp(30px,5vw,46px); margin: 0 0 10px; }
+  .ghead h1 span { color: var(--fire); }
+  .ghead p { color: var(--ink-soft); max-width: 68ch; font-size: 17px; }
+  /* filter bar */
+  .filters { position: sticky; top: 58px; z-index: 40; background: rgba(12,10,9,.9);
+    backdrop-filter: blur(10px); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    padding: 14px 0; margin-bottom: 28px; }
+  .frow { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 4px 0; }
+  .frow .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-faint); width: 78px; }
+  .frow button { font-family: var(--mono); font-size: 12.5px; background: var(--bg-card);
+    color: var(--ink-soft); border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px; cursor: pointer; }
+  .frow button.on { background: var(--fire); color: #1a0d06; border-color: var(--fire); font-weight: 700; }
+  /* grid */
+  .ggrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 18px; padding-bottom: 60px; }
+  .gcard { background: var(--bg-card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+    cursor: pointer; transition: border-color .15s, transform .15s; position: relative; }
+  .gcard:hover { border-color: var(--fire); transform: translateY(-2px); }
+  .gcard.sel { border-color: var(--refugia); box-shadow: 0 0 0 2px var(--refugia) inset; }
+  .gcard .thumb { width: 100%; aspect-ratio: 5/4; object-fit: cover; display: block; background: #fff; }
+  .gcard .meta { padding: 12px 13px; }
+  .gcard .t { font-size: 14.5px; font-weight: 700; line-height: 1.25; }
+  .gcard .tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .gcard .tag { font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 100px;
+    border: 1px solid var(--line); color: var(--ink-soft); }
+  .gcard .tag.yr { border-color: #6b4a1f; color: var(--gold); }
+  .gcard .tag.pr { border-color: #1f5c3a; color: var(--refugia); }
+  .gcard .src { display: block; margin-top: 8px; font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); }
+  .gcard .pick { position: absolute; top: 8px; right: 8px; font-family: var(--mono); font-size: 10px;
+    background: var(--refugia); color: #08130c; font-weight: 700; padding: 3px 7px; border-radius: 100px; display: none; }
+  .gcard.sel .pick { display: block; }
+  .gcard .purpose { font-size: 12.5px; color: var(--ink-soft); margin-top: 7px; line-height: 1.45; }
+  /* compare dock */
+  .cdock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: var(--bg-soft);
+    border-top: 1px solid var(--fire); transform: translateY(100%); transition: transform .3s; max-height: 82vh; overflow: auto; }
+  .cdock.up { transform: translateY(0); }
+  .cdock .inner { max-width: 1180px; margin: 0 auto; padding: 20px 24px 28px; }
+  .cdock .bar { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .cdock .bar h3 { margin: 0; font-size: 18px; }
+  .cdock .bar .x { margin-left: auto; cursor: pointer; font-family: var(--mono); font-size: 13px;
+    border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px; color: var(--ink-soft); background: var(--bg-card); }
+  .cdock .hint { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); }
+  #galCompare { max-width: 820px; margin: 0 auto; }
+  #galCompare .cmp-cap { display: flex; justify-content: space-between; font-family: var(--mono);
+    font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">Port&nbsp;Hills&nbsp;<span>· Gallery</span></div>
+    <div class="links"><a href="index.html">← back to report</a></div>
+  </div>
+</nav>
+
+<div class="gwrap">
+  <div class="ghead">
+    <h1>Every scene, <span>in one place</span></h1>
+    <p>All the imagery pulled from Google Earth Engine — true colour, SWIR, dNBR, severity and radar — filtered by year, sensor and product. <b>Click any two cards</b> to slide them against each other. Each card shows what it is, when, from which sensor, and where it came from.</p>
+  </div>
+</div>
+
+<div class="filters">
+  <div class="gwrap">
+    <div class="frow"><span class="lbl">Year</span><span id="f-year"></span></div>
+    <div class="frow"><span class="lbl">Sensor</span><span id="f-sensor"></span></div>
+    <div class="frow"><span class="lbl">Product</span><span id="f-product"></span></div>
+  </div>
+</div>
+
+<div class="gwrap">
+  <div class="ggrid" id="grid"></div>
+</div>
+
+<!-- compare dock -->
+<div class="cdock" id="cdock">
+  <div class="inner">
+    <div class="bar">
+      <h3>Slide to compare</h3>
+      <span class="hint" id="cdockHint"></span>
+      <span class="x" id="cdockClose">✕ close</span>
+    </div>
+    <div class="compare" id="galCompare">
+      <img id="gA" src="" alt="">
+      <img id="gB" src="" alt="" class="cmp-top">
+      <input type="range" min="0" max="100" value="50" class="cmp-range" id="gRange" aria-label="compare">
+      <div class="cmp-divider"><span>◂ drag ▸</span></div>
+    </div>
+    <div class="cmp-cap"><span id="gAcap"></span><span id="gBcap"></span></div>
+  </div>
+</div>
+
+<script>
+// ---- manifest: every GEE scene, with provenance ----
+const DATA = [
+ {f:"fire_pre_truecolour.png",           t:"True colour · before",      date:"2017-01-24", year:2017, sensor:"Sentinel-2", product:"True colour", purpose:"Green baseline — the hills before the fire.", src:"GEE · S2 L1C"},
+ {f:"2017-02-13_truecolour.png",         t:"True colour · ignition day",date:"2017-02-13", year:2017, sensor:"Sentinel-2", product:"True colour", purpose:"Smoke plume visible; the fire as the eye sees it.", src:"GEE · S2 SR"},
+ {f:"2017-02-23_S2_10m_truecolour.png",  t:"True colour · after",       date:"2017-02-23", year:2017, sensor:"Sentinel-2", product:"True colour", purpose:"Two weeks on — the black scar settled.", src:"GEE · S2 SR 10 m"},
+ {f:"fire_recovery_truecolour.png",      t:"True colour · one year on", date:"2018 summer",year:2018, sensor:"Sentinel-2", product:"True colour", purpose:"Cloud-masked composite; vegetation growing back, scar still visible.", src:"GEE · S2 SR composite"},
+ {f:"2017-02-13_SWIR_falsecolour.png",   t:"SWIR false colour · ignition",date:"2017-02-13",year:2017, sensor:"Sentinel-2", product:"SWIR", purpose:"Active fire & fresh scar glow orange; healthy veg green.", src:"GEE · S2 SR"},
+ {f:"2017-02-23_S2_10m_SWIR.png",        t:"SWIR · full scar",          date:"2017-02-23", year:2017, sensor:"Sentinel-2", product:"SWIR", purpose:"Whole burn scar in shortwave infrared, 10 m.", src:"GEE · S2 SR 10 m"},
+ {f:"2017-02-24_Landsat_30m_SWIR.png",   t:"SWIR · Landsat 30 m",       date:"2017-02-24", year:2017, sensor:"Landsat 8", product:"SWIR", purpose:"Coarser 30 m version — the source dNBR is built from.", src:"GEE · Landsat 8 C2 L2"},
+ {f:"DNBR_2017_Landsat.png",             t:"dNBR · burn severity",      date:"2017",       year:2017, sensor:"Landsat 8", product:"dNBR", purpose:"Pre−post NBR. Red = severe loss. The core layer.", src:"GEE · Landsat 8"},
+ {f:"SEVERITY_2017_Landsat.png",         t:"Severity classes",          date:"2017",       year:2017, sensor:"Landsat 8", product:"Severity", purpose:"dNBR thresholded: unburnt→low→moderate→high.", src:"GEE · Landsat 8"},
+ {f:"A1_truecolor_burn_vs_shadow_2017.png",t:"True colour + shadow-freq",date:"2017",      year:2017, sensor:"Landsat 8", product:"dNBR", purpose:"QA shadow-frequency proof: char keeps getting called shadow.", src:"GEE · Landsat 8"},
+ {f:"2017-02-12_SAR_VH_prefire.png",     t:"SAR VH · before",           date:"2017-02-12", year:2017, sensor:"Sentinel-1", product:"SAR", purpose:"Radar backscatter before the fire (sees through cloud).", src:"GEE · S1 GRD VH"},
+ {f:"2017-03-02_SAR_VH_postfire.png",    t:"SAR VH · after",            date:"2017-03-02", year:2017, sensor:"Sentinel-1", product:"SAR", purpose:"Radar after the fire — backscatter drops where veg is gone.", src:"GEE · S1 GRD VH"},
+ {f:"2017_SAR_change_VH_12Feb_vs_2Mar.png",t:"SAR change",              date:"12 Feb→2 Mar",year:2017,sensor:"Sentinel-1", product:"SAR", purpose:"VH change: blue = backscatter drop = burnt. Independent of optical.", src:"GEE · S1 GRD"},
+ {f:"DNBR_2024_Sentinel2.png",           t:"dNBR · 2024 fire",          date:"2024",       year:2024, sensor:"Sentinel-2", product:"dNBR", purpose:"The 2024 Port Hills fire, for comparison.", src:"GEE · S2 SR"},
+ {f:"SEVERITY_2024_Sentinel2.png",       t:"Severity · 2024 fire",      date:"2024",       year:2024, sensor:"Sentinel-2", product:"Severity", purpose:"2024 severity classes (S2 10 m).", src:"GEE · S2 SR"},
+ {f:"spring2016_truecolour.png",         t:"Spring true colour · 2016", date:"2016 spring",year:2016, sensor:"Sentinel-2", product:"True colour", purpose:"Pre-fire spring baseline (Sep–Nov 2016), for phenology.", src:"GEE · S2 spring composite"},
+ {f:"spring2016_YI.png",                 t:"Yellowness — gorse in bloom · 2016", date:"2016 spring",year:2016, sensor:"Sentinel-2", product:"Phenology", purpose:"Yellowness index: flowering gorse lights up yellow, separating it from broadleaf scrub.", src:"GEE · S2 · YI_spr"},
+ {f:"spring2016_NDVI.png",               t:"Spring NDVI · 2016",        date:"2016 spring",year:2016, sensor:"Sentinel-2", product:"Index", purpose:"Spring greenness (Sep–Nov 2016).", src:"GEE · S2 · NDVI_spr"},
+ {f:"gridA3_pre_truecolour.png",  t:"Grid true colour · pre-fire",  date:"2017 pre", year:2017, sensor:"Landsat 8", product:"True colour", purpose:"Grid-aligned pre-fire true colour from the analysis stack (stackA3).", src:"stackA3 · pre_B4/B3/B2"},
+ {f:"gridA3_post_truecolour.png", t:"Grid true colour · post-fire", date:"2017 post",year:2017, sensor:"Landsat 8", product:"True colour", purpose:"Grid-aligned post-fire true colour (stackA3).", src:"stackA3 · post_B4/B3/B2"},
+ {f:"gridA3_dNBR.png",            t:"Grid dNBR",                    date:"2017", year:2017, sensor:"Landsat 8", product:"dNBR", purpose:"Analysis-grid dNBR (blue→red = unburnt→severe).", src:"stackA3 · dNBR"},
+ {f:"gridA3_severity.png",        t:"Grid severity",               date:"2017", year:2017, sensor:"Landsat 8", product:"Severity", purpose:"Severity classes on the analysis grid.", src:"stackA3 · severity"},
+ {f:"gridA3_NDMI.png",            t:"NDMI · moisture",             date:"2017 pre", year:2017, sensor:"Landsat 8", product:"Index", purpose:"Moisture index — a fuel-moisture proxy.", src:"stackA3 · NDMI"},
+ {f:"gridA3_BSI.png",             t:"BSI · bare soil",             date:"2017 pre", year:2017, sensor:"Landsat 8", product:"Index", purpose:"Bare Soil Index — locates bare ground independently.", src:"stackA3 · BSI"},
+ {f:"gridA3_northness.png",       t:"Northness · aspect",          date:"terrain",  year:2017, sensor:"DEM", product:"Terrain", purpose:"cos(aspect): +1 = north-facing (sunlit/drier in the south).", src:"stackA3 · northness"},
+ {f:"aerial2015_truecolour.png",  t:"Aerial photo · 2015 (0.3 m)", date:"2015", year:2015, sensor:"Aerial", product:"Aerial", purpose:"0.3 m aerial, two years pre-fire — reference base for training-point interpretation.", src:"LINZ aerial · merged"},
+ {f:"aerial2024_truecolour.png",  t:"Aerial photo · 2024 (0.2 m)", date:"2024", year:2024, sensor:"Aerial", product:"Aerial", purpose:"0.2 m aerial over the 2024 fire — highest-resolution reference.", src:"LINZ aerial · merged, fire-clipped"},
+];
+
+const state = { year:"all", sensor:"all", product:"all" };
+const picks = [];
+
+function uniq(k){ return ["all", ...[...new Set(DATA.map(d=>String(d[k])))]]; }
+function buildFilter(key, id){
+  const host = document.getElementById(id);
+  uniq(key).forEach(v=>{
+    const b=document.createElement("button");
+    b.textContent = v==="all" ? "All" : v;
+    b.className = v==="all" ? "on" : "";
+    b.onclick = ()=>{ state[key]=v; [...host.children].forEach(c=>c.classList.remove("on")); b.classList.add("on"); render(); };
+    host.appendChild(b);
+  });
+}
+buildFilter("year","f-year"); buildFilter("sensor","f-sensor"); buildFilter("product","f-product");
+
+function match(d){
+  return (state.year==="all"||String(d.year)===state.year)
+      && (state.sensor==="all"||d.sensor===state.sensor)
+      && (state.product==="all"||d.product===state.product);
+}
+function render(){
+  const grid=document.getElementById("grid"); grid.innerHTML="";
+  DATA.filter(match).forEach(d=>{
+    const c=document.createElement("div"); c.className="gcard"+(picks.includes(d.f)?" sel":"");
+    c.innerHTML =
+      `<span class="pick">${picks.indexOf(d.f)===0?"A":"B"}</span>`+
+      `<img class="thumb" src="gallery_img/${d.f}" alt="${d.t}" loading="lazy">`+
+      `<div class="meta"><div class="t">${d.t}</div>`+
+      `<div class="tags"><span class="tag yr">${d.date}</span><span class="tag">${d.sensor}</span><span class="tag pr">${d.product}</span></div>`+
+      `<div class="purpose">${d.purpose}</div><span class="src">${d.src}</span></div>`;
+    c.onclick=()=>toggle(d.f);
+    grid.appendChild(c);
+  });
+}
+function toggle(f){
+  const i=picks.indexOf(f);
+  if(i>=0) picks.splice(i,1);
+  else { picks.push(f); if(picks.length>2) picks.shift(); }
+  render();
+  if(picks.length===2) showCompare();
+}
+function meta(f){ return DATA.find(d=>d.f===f); }
+function showCompare(){
+  const A=meta(picks[0]), B=meta(picks[1]);
+  document.getElementById("gA").src="gallery_img/"+A.f;
+  document.getElementById("gB").src="gallery_img/"+B.f;
+  document.getElementById("gAcap").textContent="◂ "+A.t+" ("+A.date+")";
+  document.getElementById("gBcap").textContent=B.t+" ("+B.date+") ▸";
+  document.getElementById("cdockHint").textContent=A.sensor+" vs "+B.sensor;
+  const r=document.getElementById("gRange"), top=document.getElementById("gB"),
+        div=document.querySelector("#galCompare .cmp-divider");
+  function set(v){ top.style.clipPath=`inset(0 0 0 ${v}%)`; div.style.left=v+"%"; }
+  r.oninput=()=>set(r.value); r.value=50; set(50);
+  document.getElementById("cdock").classList.add("up");
+}
+document.getElementById("cdockClose").onclick=()=>{
+  document.getElementById("cdock").classList.remove("up");
+  picks.length=0; render();
+};
+render();
+</script>
+</body>
+</html>

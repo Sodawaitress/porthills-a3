@@ -1,0 +1,101 @@
+digraph workflow {
+  graph [rankdir=TB, splines=ortho, nodesep=0.35, ranksep=0.45, fontname="Helvetica", bgcolor="white"]
+  node  [fontname="Helvetica", fontsize=10, style="filled", color="#4A3A30", penwidth=1, fontcolor="#3A2A22"]
+  edge  [fontname="Helvetica", fontsize=9, color="#7A655A", fontcolor="#7A655A", arrowsize=0.7]
+
+  subgraph cluster_A {
+    label="1  Get the data"; fontsize=11; fontname="Helvetica-Bold"; fontcolor="#8C3A2B"
+    style="rounded"; color="#C9B7A6"; bgcolor="#FBF3EA"
+    A1 [label="Study area &\nfire boundary\n(clip extent)", shape=box, fillcolor="#FFFFFF"]
+    A2 [label="Pre-fire image\n(Landsat 8)", shape=box, fillcolor="#FFFFFF"]
+    A3 [label="Post-fire image\n(Landsat 8)", shape=box, fillcolor="#FFFFFF"]
+    ASPR [label="Spring 2016 image\n(phenology)", shape=box, fillcolor="#FFFFFF"]
+    A4 [label="DEM, LCDB land cover,\n2015 aerial photos", shape=box, fillcolor="#FFFFFF"]
+  }
+  B [label="2  Pre-processing\nclean up, mask cloud & shadow, composite, clip to study area", shape=box, fillcolor="#EFE6DD"]
+  SPLIT [label="Pre-fire image\nused two ways", shape=box, style="filled,bold", fillcolor="#F4CE85", color="#B5651D", penwidth=2]
+  POST  [label="Post-fire image\n(processed)", shape=box, fillcolor="#EFE6DD"]
+
+  subgraph cluster_C {
+    label="3  Feature stack (spectral + 2016 spring phenology -> S+Sp)"; fontsize=11; fontname="Helvetica-Bold"; fontcolor="#8C3A2B"
+    style="rounded"; color="#C9B7A6"; bgcolor="#FBF3EA"
+    C1 [label="Pre-fire bands", shape=box, fillcolor="#FFFFFF"]
+    C2 [label="Indices\nNDVI, NDMI, BSI, NBR", shape=box, fillcolor="#FFFFFF"]
+    C3 [label="Spring 2016\nbands + indices\nNDVI_spr, YI_spr, dNDVI_spr", shape=box, fillcolor="#FFFFFF"]
+    C4 [label="Stacked together", shape=box, fillcolor="#F0D8BA"]
+  }
+  VSET [label="Compare 4 variable sets\nS / S+T / S+Sp / S+T+Sp\n-> S+Sp chosen (5-fold spatial CV)", shape=box, style="filled,bold", fillcolor="#F4CE85", color="#B5651D", penwidth=2]
+  TERR [label="Terrain layers\n(covariate only,\nnot a classifier input)", shape=box, fillcolor="#FFFFFF"]
+
+  subgraph cluster_D {
+    label="4  Training data"; fontsize=11; fontname="Helvetica-Bold"; fontcolor="#8C3A2B"
+    style="rounded"; color="#C9B7A6"; bgcolor="#FBF3EA"
+    D1 [label="Define classes\n(6 fuel classes)", shape=box, fillcolor="#FFFFFF"]
+    D2 [label="Pick sample points\nfrom land cover + air photos", shape=box, fillcolor="#FFFFFF"]
+    D3 [label="Split train / test\nby 300 m blocks, not random", shape=box, fillcolor="#FFFFFF"]
+    STAT [label="Data exploration & cleaning (R3)\noutliers, per-class normality,\npixel purity, de-duplicate", shape=box, fillcolor="#EFE6DD"]
+    D4 [label="Classes\nseparable enough?\n(JM distance)", shape=diamond, fillcolor="#FFFFFF", height=1.0, width=1.8]
+  }
+  HANSEN [label="cleared_pine mask\n(Hansen 2016 forest loss)", shape=box, fillcolor="#FFFFFF"]
+  E  [label="5  Classify\nper-pixel Random Forest (S+Sp)\n4 classes; 5-fold spatial CV; SHAP", shape=box, fillcolor="#EFE6DD"]
+  F  [label="6  Check accuracy\ngood enough?", shape=diamond, fillcolor="#FFFFFF", height=1.1, width=1.9]
+  CM [label="Confusion matrix\nCV OA 64% / test OA 59%", shape=box, fillcolor="#F0D8BA"]
+  MAP [label="Pre-fire vegetation /\nfuel map (Objective 1)", shape=box, style="filled,bold", fillcolor="#E6A96A", color="#A6431C", penwidth=2]
+
+  subgraph cluster_G {
+    label="Burn map  (side branch)"; fontsize=11; fontname="Helvetica-Bold"; fontcolor="#8C3A2B"
+    style="rounded"; color="#C9B7A6"; bgcolor="#F6E6DA"
+    G1 [label="Before vs after\n-> dNBR", shape=box, fillcolor="#FFFFFF"]
+    G2 [label="Set threshold\n(unburnt islands, p90)", shape=box, fillcolor="#FFFFFF"]
+    GEX [label="Exclude bare rock\n+ cleared_pine", shape=box, fillcolor="#FFFFFF"]
+    G3 [label="Unburned patches\nephemeral refugia\n(Objective 2)", shape=box, fillcolor="#F2D3C0"]
+  }
+
+  subgraph cluster_R {
+    label="Relationships (R4)"; fontsize=11; fontname="Helvetica-Bold"; fontcolor="#8C3A2B"
+    style="rounded"; color="#C9B7A6"; bgcolor="#F1E7F0"
+    REL [label="Regression: dNBR ~ pre-fire\nspectral + terrain predictors\ncorrelation, VIF, R^2", shape=box, fillcolor="#E8D8E8"]
+  }
+
+  H [label="7  Put it together\noverlay refugia x vegetation x terrain\npatterns, not causes  (Objective 3)", shape=box, style="filled,bold", fillcolor="#E6A96A", color="#A6431C", penwidth=2]
+  OBJ4 [label="Low-flammability\nspecies shortlist\n(Objective 4)", shape=box, style="filled,bold", fillcolor="#E6A96A", color="#A6431C", penwidth=2]
+
+  A2 -> B
+  A3 -> B
+  ASPR -> B
+  A1 -> B   [label=" clip extent", style=dotted]
+  A4 -> TERR [label=" DEM"]
+  A4 -> D2   [label=" land cover / photos"]
+  A4 -> HANSEN [label=" Hansen", style=dotted]
+  B -> SPLIT
+  B -> POST
+  SPLIT -> C1
+  SPLIT -> G1   [label=" before"]
+  POST  -> G1   [label=" after"]
+  C1 -> C4
+  C2 -> C4
+  C3 -> C4
+  C1 -> C2 [style=invis]
+  C2 -> C3 [style=invis]
+  C4 -> VSET
+  VSET -> E [label=" features"]
+  D1 -> D2 -> D3 -> STAT -> D4
+  D4 -> E   [label=" yes: training"]
+  E -> F
+  F -> CM   [label=" produces"]
+  F -> MAP  [label=" yes"]
+  G1 -> G2 -> GEX -> G3
+  C4 -> REL [label=" pre-fire predictors"]
+  G1 -> REL [label=" dNBR", style=dotted]
+  REL -> H  [label=" which drivers"]
+  MAP -> GEX [label=" bare-rock + cleared_pine mask", style=dashed, color="#7A655A"]
+  HANSEN -> GEX [style=dashed, color="#7A655A"]
+  HANSEN -> MAP [label=" mask", style=dashed, color="#7A655A"]
+  MAP -> H
+  G3  -> H
+  TERR -> H  [label=" covariate"]
+  H -> OBJ4
+  D4 -> D1 [label=" no: merge classes", style=dashed, color="#B5451F", fontcolor="#B5451F", constraint=false]
+  D4 -> D2 [label=" no: better samples", style=dashed, color="#B5451F", fontcolor="#B5451F", constraint=false]
+  F  -> D2 [label=" no: more samples", style=dashed, color="#B5451F", fontcolor="#B5451F", constraint=false]
+}
