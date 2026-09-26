@@ -227,10 +227,7 @@
 
 ### R7 地图（4分 · 喂：US6/US7/US9）
 - 高质量**分类图** + **refugia 图**；每图查 6 要素（title/legend/scale/north/inset/source+EPSG:2193）。
-- ⭐ 已做（`scripts/27_build_severity_raster.py` + `scripts/28_build_final_maps.py`，真·ArcGIS Pro
-  Layout，不是matplotlib画的）：两张图都存进了`PortHills2017.aprx`本体(新增2个Map+2个Layout，
-  没动原有的)，导出`exploration/Map1_FuelClass_2017.png`(4类燃料分类+火场边界+定位图+比例尺+
-  指北针+图例)、`exploration/Map2_Refugia_2017.png`(severity 4级，unburned=green=refugia)。
+- （第一版用 `scripts/27_build_severity_raster.py`(severity 栅格，仍在用) + `28_build_final_maps.py` 出的两张老图**已被下面定稿版取代并删除**。）
 - ✅ **地图已定稿(2026-09-26)**：`scripts/44_build_all_maps.py`(全自动重建所有 Layout) + `45_build_cleaning_map.py`(Map3)。
   三张最终图导出在 `exploration/map_final/`：**Map1 燃料分类**(V2)、**Map2 烧毁程度+refugia**、**Map3 30m格清洗**，
   变体在 `exploration/map_variants/`。全部按老师布局反馈排(主图左、inset/图例/比例尺/N 竖排右侧)，三张风格统一。
